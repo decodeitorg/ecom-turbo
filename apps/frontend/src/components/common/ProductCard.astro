@@ -1,0 +1,101 @@
+---
+import { VariantUnwindedProductType } from '@/common/types';
+import Button from '../ui/Button';
+
+interface Props {
+  product: VariantUnwindedProductType;
+  key: String;
+}
+
+const { product, key } = Astro.props;
+
+let href = `/product/${product.slug}`;
+
+let src = product?.hasVariants
+  ? product?.variants[0]?.images[0]
+  : product?.images[0];
+let alt = product?.name;
+let name = product?.name;
+let salePrice = product?.hasVariants
+  ? product?.variants[0]?.salePrice
+  : product?.salePrice;
+
+let isHomeDeliveryFree = product?.hasVariants
+  ? product?.variants[0]?.isHomeDeliveryFree
+  : product?.isHomeDeliveryFree;
+
+let price = product?.hasVariants ? product?.variants[0]?.price : product?.price;
+let status = product.status;
+---
+
+<div class="hover-shadow group w-full rounded-xl hover:shadow-primary">
+  <div class="flex h-full flex-col justify-between gap-2">
+    <a href={href} class="cursor-pointer">
+      <img
+        loading="lazy"
+        src={src}
+        alt={alt}
+        class="aspect-square h-fit w-full rounded-t-xl object-cover"
+        height={400}
+        width={400}
+      />
+
+      <h3
+        class="mt-2 px-2 font-semibold text-slate-600 transition-colors duration-300 hover:underline group-hover:text-primary"
+      >
+        {name}
+      </h3>
+    </a>
+
+    <div>
+      <div
+        class="flex items-center justify-start gap-3 px-2 font-semibold text-slate-800"
+      >
+        <div class="text-xl">৳{salePrice}</div>
+        {price != '0' && <div class="text-xl line-through">৳{price}</div>}
+      </div>
+      <div class=`p-2 grid  grid-cols-1 gap-2 md:grid-cols-2`>
+        <Button variant="border" id={key + product._id + 'addToCart'}>
+          Add To Cart
+        </Button>
+        <Button
+          className="text-white"
+          id={key + product._id + 'buyNow'}
+          variant="solid"
+        >
+          Order Now
+        </Button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .hover-shadow {
+    transition: box-shadow 0.3s ease-in-out;
+  }
+
+  .hover-shadow:hover {
+    box-shadow: 0 0 10px theme('colors.primary.DEFAULT');
+  }
+</style>
+
+<script define:vars={{ product, key }}>
+  let selectedVariants = product?.hasVariants ? product?.variants[0] : null;
+
+  let AddToCart = document.getElementById(key + product._id + 'addToCart');
+  let BuyNow = document.getElementById(key + product._id + 'buyNow');
+
+  BuyNow.addEventListener('click', () => {
+    console.log(
+      '🚀 ~ BuyNow.addEventListener ~ product, selectedVariants:',
+      product,
+      selectedVariants,
+    );
+    handleBuyNow(product, selectedVariants, 1);
+  });
+
+  AddToCart.addEventListener('click', () => {
+    handleAddToCart(product, selectedVariants, 1);
+  });
+</script>

@@ -1,0 +1,101 @@
+---
+import { verifyToken } from '@/utils/authGaurd';
+
+let key = Astro.props.key;
+
+let token = Astro.cookies.get('token')?.value;
+
+let user = await verifyToken(token);
+
+let role = user?.role === 'Customer' ? 'customer' : 'admin';
+---
+
+{
+  token ? (
+    <div
+      id={key}
+      class="userBox flex flex-col items-center justify-center gap-1 rounded-full md:flex-row md:items-center md:justify-start md:gap-2"
+    >
+      <div class="group relative">
+        <button class="dropdown-button rounded-full border focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+          <img
+            id={key + 'image'}
+            src={user?.image}
+            height={50}
+            width={50}
+            alt={'user name'}
+            class="h-8 w-8 rounded-full md:h-10 md:w-10"
+            loading="lazy"
+          />
+        </button>
+        <div class="dropdown-menu absolute right-0 z-50 mt-2 hidden w-48 rounded-md border border-black bg-white shadow-xl">
+          <a
+            href="/customer/orders"
+            class="block cursor-pointer rounded-md px-4 py-2 text-gray-700 hover:bg-primary active:bg-blue-100"
+          >
+            My Orders
+          </a>
+          <a
+            href="/customer/profile"
+            class="block cursor-pointer rounded-md px-4 py-2 text-gray-700 hover:bg-primary active:bg-blue-100"
+          >
+            My Profile
+          </a>
+          <a
+            href={`/${role}/`}
+            class="block cursor-pointer rounded-md px-4 py-2 text-gray-700 hover:bg-primary active:bg-blue-100"
+          >
+            Dashboard
+          </a>
+          <button class="logoutButton block w-full cursor-pointer rounded-md px-4 py-2 text-left text-gray-700 hover:bg-primary active:bg-blue-100">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <a
+      id={key + 'login'}
+      href="/login"
+      class="rounded-lg border border-primary px-2 py-1 text-primary"
+    >
+      Login
+    </a>
+  )
+}
+
+<script>
+  // JavaScript to toggle the dropdown
+  const dropdownButton = document.querySelectorAll('.dropdown-button');
+  const dropdownMenu = document.querySelectorAll('.dropdown-menu');
+  let isOpen = false; // Set to true to open the dropdown by default
+
+  // Function to toggle the dropdown state
+  function toggleDropdown() {
+    isOpen = !isOpen;
+    dropdownMenu.forEach((menu) => {
+      menu.classList.toggle('hidden', isOpen);
+    });
+  }
+
+  // Set initial state
+  toggleDropdown();
+
+  dropdownButton.forEach((button) => {
+    button.addEventListener('click', () => {
+      toggleDropdown();
+    });
+  });
+</script>
+
+<script>
+  import { logOut } from '@/common/function';
+
+  const logoutButton = document.querySelectorAll('.logoutButton');
+
+  logoutButton.forEach((button) => {
+    button.addEventListener('click', () => {
+      logOut();
+    });
+  });
+</script>

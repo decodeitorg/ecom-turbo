@@ -1,0 +1,32 @@
+---
+let { customerReviewImages } = Astro.props;
+---
+
+<section class="mt-32">
+    <div>
+        <h3 class="mb-6 text-center text-xl font-medium text-primary">
+            Clients
+        </h3>
+        <h2 class="mb-12 text-center text-4xl font-bold">
+            Our Satisfied Customers
+        </h2>
+    </div>
+    <div class="container mx-auto">
+        <div class="grid grid-cols-3 gap-4 md:grid-cols-5">
+            {
+                customerReviewImages?.map((src) => (
+                    <div class="grid gap-4">
+                        <div>
+                            <img
+                                loading="lazy"
+                                class=" max-w-full rounded-lg border-2"
+                                src={src?.image}
+                                alt=""
+                            />
+                        </div>
+                    </div>
+                ))
+            }
+        </div>
+    </div>
+</section>

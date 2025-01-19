@@ -1,0 +1,109 @@
+---
+import Product from '@/models/Product';
+import ProductCard from '../common/ProductCard.astro';
+import User from '@/models/User';
+import { getUserDataFromToken } from '@/utils/authGaurd';
+import { populateVariantsAttributes } from '@/utils/pipeline';
+
+let products = await Product.aggregate([
+  {
+    $match: {
+      isPublished: {
+        $ne: false,
+      },
+    },
+  },
+
+  ...populateVariantsAttributes(),
+
+  {
+    $project: {
+      name: 1,
+      slug: 1,
+      logo: 1,
+      price: 1,
+      images: 1,
+      salePrice: 1,
+      isHomeDeliveryFree: 1,
+      hasVariants: 1,
+      variantsAttributes: 1,
+      variants: 1,
+      status: 1,
+      isPublished: 1,
+    },
+  },
+
+  {
+    $sort: {
+      createdAt: -1,
+    },
+  },
+  // {
+  //   $limit: 12,
+  // },
+]);
+
+const userCookie = Astro.cookies.get('token')?.value;
+let wishlist = [];
+
+if (userCookie) {
+  const user = await getUserDataFromToken(userCookie);
+  const userWishlist = await User.findById(user?._id, 'wishlist');
+  wishlist = userWishlist?.wishlist ?? [];
+  wishlist = JSON.parse(JSON.stringify(wishlist));
+}
+
+products = products.map((product) => {
+  let _idProduct = product._id.toString();
+  let isWishlisted = wishlist.includes(_idProduct);
+  return {
+    ...product,
+    isWishlisted: userCookie ? isWishlisted : false,
+  };
+});
+---
+
+<section class="container">
+  <div class="mt-9">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-bold tracking-tight md:text-2xl lg:text-3xl">
+        You might also like
+      </h2>
+      <a
+        href="/products"
+        class="hidden text-sm font-semibold text-primary hover:text-primary sm:block"
+      >
+        Search more
+        <span>&rarr;</span>
+      </a>
+    </div>
+    <div class="mt-2 animate-pulse text-lg font-bold text-gray-500">
+      একদিনে একের অধিক অর্ডার করলেও, <span class="text-primary">
+        একবার কুরিয়ার চার্জ দিতে হবে
+      </span>
+    </div>
+
+    <div class="mt-9 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-3">
+      {
+        products.map((product, index) => (
+          <ProductCard
+            key="featuredProduct"
+            product={{
+              _id: product._id,
+              name: product.name,
+              status: product.status,
+              slug: product.slug,
+              images: product.images,
+              price: product.price,
+              salePrice: product.salePrice,
+              isHomeDeliveryFree: product.isHomeDeliveryFree,
+              hasVariants: product.hasVariants,
+              variants: product.variants,
+              variantsAttributes: product.variantsAttributes,
+            }}
+          />
+        ))
+      }
+    </div>
+  </div>
+</section>

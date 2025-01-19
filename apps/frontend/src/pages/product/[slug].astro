@@ -1,0 +1,829 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import {
+  FaCartPlus,
+  FaRegSadTear,
+  FaShoppingCart,
+  FaWhatsapp,
+} from 'react-icons/fa';
+import { marked } from 'marked';
+
+import Product from '@/models/Product';
+import Attribute from '@/models/Attribute';
+
+import Button from '@/components/ui/Button.tsx';
+import Share from '@/components/Product/Share.astro';
+
+import BreadCubm from '@/components/common/BreadCubm.astro';
+
+import { statusStyle, statusText } from '@/const/status.ts';
+import { populateVariantsAttributes } from '@/common/function';
+import { getYoutubeEmbedUrl, getYoutubeThumbnailUrl } from '@/common/youtube';
+
+import SliderRelatedProducts from './SliderRelatedProducts.astro';
+import Frontend from '@/models/Frontend';
+
+let { slug } = Astro.params;
+
+if (!slug) {
+  Astro.redirect('/404');
+}
+
+let product = null;
+let attributes = null;
+let variantsAttributes: any = [];
+let selectedVariants = null;
+let frontend = null;
+
+try {
+  [product, attributes, frontend] = await Promise.all([
+    Product.findOne({ slug }),
+    Attribute.find(),
+    Frontend.findOne(),
+  ]);
+  product = JSON.parse(JSON.stringify(product));
+  attributes = JSON.parse(JSON.stringify(attributes));
+
+  if (!product || !attributes) {
+    throw new Error('Product or attributes not found');
+  }
+
+  if (!product?.isPublished) {
+    return Astro.redirect('/404?msg=Product not found');
+  }
+
+  if (product?.hasVariants) {
+    variantsAttributes = populateVariantsAttributes(
+      attributes,
+      product?.variantsAttributes,
+    );
+    selectedVariants = product?.variants[0];
+    product.variantsAttributes = variantsAttributes;
+  }
+} catch (e) {
+  Astro.redirect('/404');
+}
+
+let key = product?._id;
+let name = product?.name;
+let shortDescription = product?.shortDescription
+  ? marked.parse(product?.shortDescription)
+  : null;
+const useYoutube = product?.useYoutube;
+let youtubeLink = product?.youtubeLink;
+let description = product?.description
+  ? marked.parse(product?.description)
+  : null;
+let hasVariants = product?.hasVariants;
+let price = hasVariants ? selectedVariants?.price : product?.price;
+let salePrice = hasVariants ? selectedVariants?.salePrice : product?.salePrice;
+let isHomeDeliveryFree = hasVariants
+  ? selectedVariants?.isHomeDeliveryFree
+  : product?.isHomeDeliveryFree;
+let images = !hasVariants
+  ? product?.images
+  : product.imageVariant?.type === 'different'
+    ? [...new Set(product?.variants?.flatMap((variant) => variant.images))]
+    : product?.variants?.[0]?.images;
+let image = hasVariants ? selectedVariants?.images?.[0] : product?.images?.[0];
+let status: 'upcoming' | 'inStock' | 'outOfStock' = hasVariants
+  ? selectedVariants?.status
+  : product?.status;
+
+let necessaryClassesTouseInActive = {
+  variant: {
+    active: 'border-2 border-primary',
+    inactive: 'border',
+  },
+  image: {
+    active: 'border-2 border-primary p-1',
+    inactive: '',
+  },
+};
+
+let phoneNumber = frontend?.whatsappNumber;
+---
+
+<Layout
+  title={product?.name}
+  header="Product"
+  description={shortDescription || product?.name}
+  image={image}
+  isProductPage={true}
+>
+  <BreadCubm
+    productCategory={product?.category}
+    productSubCategory={product?.subCategory}
+    productLeafCategory={product?.leafCategory}
+  />
+
+  <div class="container">
+    {
+      !product ? (
+        <p class="my-16 flex items-center gap-2 p-12 text-3xl">
+          Sorry,{<FaRegSadTear />}, No Product Found
+        </p>
+      ) : (
+        <>
+          <div class="mt-3 grid grid-cols-1 gap-3 lg:mb-5 lg:mt-7 lg:grid-cols-3 lg:gap-6">
+            <div class="col-span-1 lg:col-span-2">
+              <div class="grid w-full grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-6">
+                {/* Images */}
+                <section class="col-span-1">
+                  <div
+                    class={`aspect-square w-full rounded-md object-contain hover:cursor-grab ${useYoutube && youtubeLink ? '' : 'hidden'}`}
+                    id="youtube-iframe"
+                  />
+                  <img
+                    id="main-image"
+                    src={image ?? '/images/no-image.png'}
+                    alt={name}
+                    class={`aspect-square w-full object-contain ${useYoutube && youtubeLink ? 'hidden' : ''}`}
+                  />
+
+                  <div
+                    id="sub-image-container"
+                    class="mt-3 flex items-center justify-start gap-2 overflow-x-auto"
+                  >
+                    {useYoutube && youtubeLink && (
+                      <img
+                        src={getYoutubeThumbnailUrl(youtubeLink)}
+                        class={`sub-image aspect-square h-20 w-20 rounded-md object-contain ${useYoutube ? necessaryClassesTouseInActive.image.active : ''}`}
+                      />
+                    )}
+                    {images?.map((src, index) => {
+                      return (
+                        <img
+                          src={src}
+                          alt={product?.name}
+                          class={`sub-image aspect-square h-20 w-20 rounded-md object-contain ${src === image && !useYoutube ? necessaryClassesTouseInActive.image.active : necessaryClassesTouseInActive.image.inactive}`}
+                          height={300}
+                          width={300}
+                          id={src}
+                        />
+                      );
+                    })}
+                  </div>
+                </section>
+
+                {/* Product Details */}
+                <section class="col-span-1 space-y-3">
+                  {/**product name & stock  */}
+                  <h2 class="scroll-m-20 text-xl font-semibold tracking-tight">
+                    {name}
+                  </h2>
+
+                  {/**product short description */}
+                  <div class="prose prose-sm" set:html={shortDescription} />
+
+                  <div id="order-now-top" />
+
+                  {/**product price */}
+
+                  <div
+                    id="tba"
+                    class={`${status === 'inStock' ? 'hidden' : ''} mt-2 rounded-2xl border-2 px-3 py-1`}
+                  >
+                    <p>To be announced</p>
+                  </div>
+
+                  <div class="flex w-full items-center justify-between gap-2">
+                    <div
+                      id="priceContainer"
+                      class={`${status === 'inStock' ? '' : 'hidden'} mt-2 flex items-center gap-5 font-medium leading-[150%]`}
+                    >
+                      <div
+                        id="salePrice"
+                        class="text-2xl font-medium text-primary"
+                      >
+                        {'৳ ' + salePrice}
+                      </div>
+                      {price != '0' && (
+                        <div
+                          id="price"
+                          class="my-auto text-xl text-zinc-400 line-through"
+                        >
+                          {'৳ ' + price}
+                        </div>
+                      )}
+                    </div>
+                    <div id="status" class={statusStyle[status]}>
+                      {statusText[status]}
+                    </div>
+                  </div>
+
+                  {/**product variantions */}
+                  {variantsAttributes?.length > 0 && (
+                    <div class="flex flex-col items-start justify-start gap-2 border-y py-2">
+                      {variantsAttributes?.map((item, index) => {
+                        let variant_id = selectedVariants[item._id]?.toString();
+
+                        // if (item?.slug === 'color') {
+                        //   return (
+                        //     <div class="flex w-full items-start justify-start gap-4 md:items-center">
+                        //       <p class="min-w-16 text-xs text-primary">
+                        //         {item.name} :
+                        //       </p>
+                        //       <div class="flex flex-wrap items-center justify-start gap-2">
+                        //         {item.variants.map((variant, index) => {
+                        //           return (
+                        //             <div class="has-tooltip">
+                        //               <span class="tooltip -mt-10 rounded bg-gray-100 p-1 shadow-lg">
+                        //                 {variant?.name}
+                        //               </span>
+                        //               <div
+                        //                 id={variant?._id}
+                        //                 class={`h-8 w-8 cursor-pointer rounded-lg ${variant?._id.toString() === variant_id ? necessaryClassesTouseInActive.variant.active : necessaryClassesTouseInActive.variant.inactive}`}
+                        //                 style={{
+                        //                   backgroundColor: variant?.color,
+                        //                 }}
+                        //               />
+                        //             </div>
+                        //           );
+                        //         })}
+                        //       </div>
+                        //     </div>
+                        //   );
+                        // }
+
+                        return (
+                          <div class="flex w-full items-start justify-start gap-1 md:items-center md:gap-2 lg:gap-4">
+                            <p class="min-w-16 text-sm text-primary">
+                              {item.name} :
+                            </p>
+                            <div class="flex flex-wrap items-center justify-start gap-2">
+                              {item?.variants?.map((variant, index) => {
+                                return (
+                                  <div
+                                    id={variant?._id}
+                                    class={`cursor-pointer rounded-md px-2 py-1 text-sm ${variant?._id.toString() === variant_id ? necessaryClassesTouseInActive.variant.active : necessaryClassesTouseInActive.variant.inactive}`}
+                                  >
+                                    {variant?.name}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/**product budy and add to cart */}
+                  <div class="mt-1 flex w-full items-center justify-between gap-3 md:justify-start">
+                    <div
+                      class="flex items-center border-gray-100"
+                      aria-label="cart quantity counter"
+                    >
+                      <span
+                        id={key + 'decCounter'}
+                        class="dec-counter cursor-pointer rounded-l bg-gray-100 px-3.5 py-1 duration-100 hover:bg-blue-500 hover:text-blue-50"
+                      >
+                        -
+                      </span>
+                      <input
+                        id={key + 'counter'}
+                        class="h-8 w-8 border bg-white text-center text-xs outline-none"
+                        type="number"
+                        value={1}
+                        min="1"
+                      />
+                      <span
+                        id={key + 'incCounter'}
+                        class="dec-counter cursor-pointer rounded-r bg-gray-100 px-3 py-1 duration-100 hover:bg-blue-500 hover:text-blue-50"
+                      >
+                        +
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="border"
+                      id={key + 'productDetailsPageAddToCart'}
+                      className="flex-grow py-2 !px-0"
+                    >
+                      <FaShoppingCart className="mr-2" /> Add To Cart
+                    </Button>
+                    <Button
+                      className="  flex-grow py-2 !bg-orange-600"
+                      variant="solid"
+                      id={key + 'productDetailsPageBuyNow'}
+                    >
+                      <span class="font-semibold">Buy Now</span>
+                    </Button>
+                  </div>
+
+                  {/**Contact whatsapp button */}
+                  {phoneNumber && (
+                    <a
+                      href={`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(
+                        `Product Name: ${product?.name}\nPrice: ৳${salePrice}\nURL: ${import.meta.env.PUBLIC_SITE}/product/${slug}\n\nবিস্তারিত জানতে চাই।`,
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <div class="mt-6 flex items-center justify-center gap-3 rounded border bg-green-200 p-2 text-gray-600">
+                        <FaWhatsapp className="h-6 w-6 text-green-500" />
+
+                        <span class="text-sm">হোয়াটসঅ্যাপে অর্ডার করুন</span>
+                      </div>
+                    </a>
+                  )}
+                </section>
+              </div>
+
+              <section class="col-span-1 lg:col-span-8">
+                {/* product faq */}
+                {product?.faq?.length > 0 && (
+                  <div class="mt-4">
+                    {/* <h3 class="mb-4 font-semibold text-gray-600">
+                      Frequently Asked Questions
+                    </h3> */}
+                    <div class="space-y-2">
+                      {product.faq.map((faq, index) => (
+                        <div class="rounded-lg border">
+                          <details class="group">
+                            <summary class="flex cursor-pointer items-center justify-between gap-1.5 px-3 py-2 text-gray-900">
+                              <h2 class="font-medium">{faq.question}</h2>
+                              <svg
+                                class="h-5 w-5 shrink-0 transition duration-300 group-open:-rotate-180"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M19 9l-7 7-7-7"
+                                />
+                              </svg>
+                            </summary>
+                            <div class="border-t p-4">
+                              <p class="text-sm text-gray-700">{faq.answer}</p>
+                            </div>
+                          </details>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {description && (
+                  <>
+                    {/* <h3 class="mt-4 font-semibold text-gray-600">
+                      Product Details
+                    </h3> */}
+                    <div
+                      class="prose prose-sm mt-4 w-full max-w-none"
+                      set:html={description}
+                    />
+
+                    <a href={`#order-now-top`} class="mt-4 flex justify-center">
+                      <button class="rounded border bg-primary px-10 py-2 text-white">
+                        Order Now
+                      </button>
+                    </a>
+                  </>
+                )}
+
+                {/* share products */}
+                <Share
+                  productUrl={import.meta.env.PUBLIC_SITE + '/product/' + slug}
+                />
+              </section>
+            </div>
+
+            <section class="col-span-1">
+              <SliderRelatedProducts currentProductId={product?._id} />
+            </section>
+
+            <a
+              href={`#order-now-top`}
+              class="mt-4 flex justify-center lg:hidden"
+            >
+              <button class="rounded border bg-primary px-10 py-2 text-white">
+                Buy Now
+              </button>
+            </a>
+          </div>
+        </>
+      )
+    }
+    <br />
+    <br />
+  </div>
+
+  <script is:inline async src="https://www.youtube.com/iframe_api"></script>
+
+  <script
+    define:vars={{
+      product,
+      statusStyle,
+      statusText,
+      necessaryClassesTouseInActive,
+    }}
+    defer
+  >
+    function centerSelectedImage(selectedImage) {
+      const isMobile = window.innerWidth <= 768; // Adjust this breakpoint as needed
+      const containerDimension = isMobile
+        ? subImageContainer.offsetWidth
+        : subImageContainer.offsetHeight;
+      const totalImages = subImages.length;
+      const selectedImageIndex = Array.from(subImages).indexOf(selectedImage);
+      const selectedImageDimension = isMobile
+        ? selectedImage.offsetWidth
+        : selectedImage.offsetHeight;
+      const selectedImagePosition = isMobile
+        ? selectedImage.offsetLeft
+        : selectedImage.offsetTop;
+      const selectedImageEnd = selectedImagePosition + selectedImageDimension;
+      const containerScrollPosition = isMobile
+        ? subImageContainer.scrollLeft
+        : subImageContainer.scrollTop;
+      const containerScrollEnd = containerScrollPosition + containerDimension;
+
+      // Handle the first image case (scroll to start)
+      if (selectedImageIndex === 0) {
+        subImageContainer.scrollTo({
+          [isMobile ? 'left' : 'top']: 0,
+          behavior: 'smooth',
+        });
+        return;
+      }
+
+      // Handle the last image case (scroll to end)
+      if (selectedImageIndex === totalImages - 1) {
+        subImageContainer.scrollTo({
+          [isMobile ? 'left' : 'top']: isMobile
+            ? subImageContainer.scrollWidth
+            : subImageContainer.scrollHeight,
+          behavior: 'smooth',
+        });
+        return;
+      }
+
+      // If the image is fully visible, no need to scroll
+      if (
+        selectedImagePosition >= containerScrollPosition &&
+        selectedImageEnd <= containerScrollEnd
+      ) {
+        return; // Image is already fully visible, no scroll needed
+      }
+
+      // If the start of the selected image is before the visible area, scroll to show the start of the image
+      if (selectedImagePosition < containerScrollPosition) {
+        subImageContainer.scrollTo({
+          [isMobile ? 'left' : 'top']: selectedImagePosition,
+          behavior: 'smooth',
+        });
+        return;
+      }
+
+      // If the end of the selected image is after the visible area, scroll to show the end of the image
+      if (selectedImageEnd > containerScrollEnd) {
+        subImageContainer.scrollTo({
+          [isMobile ? 'left' : 'top']:
+            selectedImagePosition - containerDimension + selectedImageDimension,
+          behavior: 'smooth',
+        });
+        return;
+      }
+    }
+
+    let mainImage = document.getElementById('main-image');
+    let subImages = document.querySelectorAll('.sub-image');
+    let subImageContainer = document.getElementById('sub-image-container');
+    let youtubeIframe = document.getElementById('youtube-iframe');
+
+    let player;
+    window.onYouTubeIframeAPIReady = function () {
+      if (!product?.youtubeLink) {
+        youtubeIframe.classList.add('hidden');
+        mainImage.classList.remove('hidden');
+        return;
+      } else {
+        youtubeIframe.classList.remove('hidden');
+        mainImage.classList.add('hidden');
+      }
+
+      function getYoutubeVideoId(url) {
+        const regExp =
+          /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return match?.[2];
+      }
+
+      let videoId = getYoutubeVideoId(product?.youtubeLink);
+
+      player = new YT.Player('youtube-iframe', {
+        videoId: videoId, // Replace with your video ID
+        playerVars: {
+          // playsinline: 1,
+          enablejsapi: 1,
+          origin: window.location.origin,
+          autoplay: 1,
+          mute: 0,
+          controls: 1,
+        },
+        events: {
+          onReady: onPlayerReady,
+          //   onStateChange: onPlayerStateChange,
+          //   onError: handleError,
+        },
+      });
+      initializePlayer(videoId);
+    };
+
+    function onPlayerReady(event) {
+      player.playVideo();
+    }
+
+    function hideYoutubeIframe() {
+      if (player) {
+        player.getIframe().style.display = 'none';
+        youtubeIframe.classList.add('hidden');
+      }
+    }
+    function showYoutubeIframe() {
+      if (player) {
+        player.getIframe().style.display = 'block';
+        youtubeIframe.classList.remove('hidden');
+      }
+    }
+    function hideMainImage() {
+      mainImage.classList.add('hidden');
+    }
+    function showMainImage() {
+      mainImage.classList.remove('hidden');
+    }
+    function playVideo() {
+      player.playVideo();
+    }
+    function pauseVideo() {
+      player.pauseVideo();
+    }
+
+    subImages.forEach((item) => {
+      item.addEventListener('click', () => {
+        subImages.forEach((img) => {
+          img.classList.remove(
+            ...necessaryClassesTouseInActive.image.active.split(' '),
+          );
+        });
+        item.classList.add(
+          ...necessaryClassesTouseInActive.image.active.split(' '),
+        );
+        if (product?.useYoutube && item.src.includes('youtube')) {
+          // Show the youtube iframe using the player API
+          hideMainImage();
+          showYoutubeIframe();
+          playVideo();
+        } else {
+          hideYoutubeIframe();
+          showMainImage();
+          mainImage.src = item.src;
+        }
+        centerSelectedImage(item);
+      });
+    });
+
+    let selectedVariants = product?.hasVariants ? product?.variants[0] : null;
+    const variantsAttributes = product?.variantsAttributes;
+    let key = product?._id;
+    let slug = product?.slug;
+    //used to check if the user has already customized the product
+    // it used by facebook pixel to track the event
+    //used under the variants section
+    let alreadyCustomized = false;
+
+    //...........................COUNTER.............................
+    const decCounter = document.getElementById(key + 'decCounter');
+    const incCounter = document.getElementById(key + 'incCounter');
+    const counter = document.getElementById(key + 'counter');
+
+    decCounter.addEventListener('click', () => {
+      if (counter.value > 1) {
+        counter.value = parseInt(counter.value) - 1;
+      }
+    });
+    incCounter.addEventListener('click', () => {
+      counter.value = parseInt(counter.value) + 1;
+    });
+
+    //...........................VARIANTS.............................
+    if (product?.hasVariants) {
+      variantsAttributes?.map((attribute) => {
+        attribute.variants.map((variant) => {
+          let variantId = variant?._id;
+          let element = document.getElementById(variantId);
+
+          element.addEventListener('click', () => {
+            let temporarySelectedVariant = {
+              ...selectedVariants,
+              [attribute._id]: variant?._id,
+            };
+            //take only the variantId
+            let keys24 = [];
+            for (let key in temporarySelectedVariant) {
+              if (key?.length === 24) {
+                keys24.push({
+                  variantId: key,
+                  value: temporarySelectedVariant[key],
+                });
+              }
+            }
+
+            let newSelectedProductVariant = product.variants?.find(
+              (variant) => {
+                let count = 0;
+                keys24.map((item) => {
+                  if (
+                    variant[item.variantId]?.toString() ===
+                    item.value?.toString()
+                  ) {
+                    count++;
+                  }
+                });
+                if (count === keys24.length) {
+                  return variant;
+                }
+              },
+            );
+
+            selectedVariants = { ...newSelectedProductVariant };
+
+            let firstImageOfSelectedVariant =
+              newSelectedProductVariant?.images[0];
+            let images = newSelectedProductVariant?.images;
+            let price = newSelectedProductVariant?.price;
+            let salePrice = newSelectedProductVariant?.salePrice;
+            let discount = Math.floor(((price - salePrice) / price) * 100);
+            let status = newSelectedProductVariant?.status;
+
+            //update this information in the frontend
+
+            //images
+            hideYoutubeIframe();
+            showMainImage();
+            mainImage.src = firstImageOfSelectedVariant;
+            //make it active by adding border and border-primary
+            document
+              .getElementById(firstImageOfSelectedVariant)
+              .classList.add(
+                ...necessaryClassesTouseInActive.image.active.split(' '),
+              );
+            //remove the border from the rest of the images
+            let subImages = document.querySelectorAll('.sub-image');
+            subImages.forEach((item) => {
+              if (item.src !== firstImageOfSelectedVariant) {
+                item.classList.remove(
+                  ...necessaryClassesTouseInActive.image.active.split(' '),
+                );
+              }
+            });
+
+            let selectedSubImage = document.getElementById(
+              firstImageOfSelectedVariant,
+            );
+            if (selectedSubImage) {
+              centerSelectedImage(selectedSubImage);
+            }
+
+            //price
+            if (price) {
+              const priceElement = document.getElementById('price');
+              const discountElement = document.getElementById('discount');
+
+              if (priceElement) {
+                priceElement.classList.remove('hidden');
+                priceElement.innerText = `৳ ${price}`;
+              }
+
+              if (discountElement) {
+                discountElement.classList.remove('hidden');
+                discountElement.innerText = `${discount} % off`;
+              }
+            } else {
+              const priceElement = document.getElementById('price');
+              const discountElement = document.getElementById('discount');
+
+              //hide
+              if (priceElement) {
+                priceElement.classList.add('hidden');
+              }
+              if (discountElement) {
+                discountElement.classList.add('hidden');
+              }
+            }
+            document.getElementById('salePrice').innerText = `৳ ${salePrice}`;
+
+            //status
+            document.getElementById('status').innerText = statusText[status];
+            document.getElementById('status').classList = statusStyle[status];
+            if (status === 'inStock') {
+              document.getElementById('tba').classList.add('hidden');
+              document
+                .getElementById('priceContainer')
+                .classList.remove('hidden');
+            } else {
+              document.getElementById('tba').classList.remove('hidden');
+              document.getElementById('priceContainer').classList.add('hidden');
+            }
+
+            //active the selected variant
+            let allVariants = [];
+            variantsAttributes.map((attribute) => {
+              attribute.variants.map((variant) => {
+                allVariants.push(variant?._id);
+              });
+            });
+            //remove the active class from all the variants
+            allVariants.map((variant) => {
+              document
+                .getElementById(variant)
+                .classList.remove(
+                  ...necessaryClassesTouseInActive.variant.active.split(' '),
+                );
+              document
+                .getElementById(variant)
+                .classList.add(
+                  ...necessaryClassesTouseInActive.variant.inactive.split(' '),
+                );
+            });
+
+            //add the active classess for those variants which are selected
+            keys24.map((variantId) => {
+              document
+                .getElementById(variantId.value)
+                .classList.add(
+                  ...necessaryClassesTouseInActive.variant.active.split(' '),
+                );
+            });
+
+            if (!alreadyCustomized) {
+              const payload = {
+                content_type: 'product',
+                content_ids: [product?.slug],
+              };
+              trackCustomizeProduct(payload);
+              alreadyCustomized = true;
+            }
+          });
+        });
+      });
+    } else {
+      let price = product?.price;
+      let salePrice = product?.salePrice;
+      let discount = Math.floor(((price - salePrice) / price) * 100);
+      if (price) {
+        const priceElement = document.getElementById('price');
+        const discountElement = document.getElementById('discount');
+
+        if (priceElement) {
+          priceElement.classList.remove('hidden');
+          priceElement.innerText = `৳ ${price}`;
+        }
+
+        if (discountElement) {
+          discountElement.classList.remove('hidden');
+          discountElement.innerText = `${discount} % off`;
+        }
+      } else {
+        const priceElement = document.getElementById('price');
+        const discountElement = document.getElementById('discount');
+
+        //hide
+        if (priceElement) {
+          priceElement.classList.add('hidden');
+        }
+        if (discountElement) {
+          discountElement.classList.add('hidden');
+        }
+      }
+      document.getElementById('salePrice').innerText = `৳ ${salePrice}`;
+    }
+
+    //...........................CART.............................
+    let AddToCart = document.getElementById(
+      key + 'productDetailsPageAddToCart',
+    );
+    let BuyNow = document.getElementById(key + 'productDetailsPageBuyNow');
+
+    BuyNow.addEventListener('click', () => {
+      let quantity = parseInt(counter.value);
+      handleBuyNow(product, selectedVariants, quantity);
+    });
+
+    AddToCart.addEventListener('click', () => {
+      let quantity = parseInt(counter.value);
+      handleAddToCart(product, selectedVariants, quantity);
+    });
+
+    trackViewContentEvent({
+      content_type: 'product',
+      content_ids: [product?.slug],
+    });
+  </script>
+</Layout>

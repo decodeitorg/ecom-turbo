@@ -1,0 +1,106 @@
+---
+import { IoIosCloseCircle } from 'react-icons/io';
+
+interface AstroProps {
+  key: string;
+  heading?: string;
+}
+
+const { key, heading = '' } = Astro.props;
+if (!key) {
+  throw new Error('key is required');
+}
+---
+
+<div class="col-span-1 flex items-center justify-between lg:col-span-3">
+  <div class="flex">
+    <input type="checkbox" id={'filter' + key} class="peer sr-only" />
+    <label
+      for={'filter' + key}
+      class="left-0 top-0 inline-block rounded-lg border border-primary p-1 transition-all duration-500 peer-checked:rotate-180 md:p-4"
+    >
+      <svg
+        class="line-icon h-5 w-5 text-primary md:h-4 md:w-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16m-7 6h7"
+        >
+        </path>
+      </svg>
+      <svg
+        class="close-icon hidden h-6 w-6 text-primary"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        >
+        </path>
+      </svg>
+    </label>
+    <div
+      class="fixed left-0 top-0 z-50 h-full w-80 -translate-x-full transform overflow-y-scroll bg-white shadow-lg transition-all duration-500 peer-checked:translate-x-0"
+    >
+      <div class="mb-24 px-2 pt-4 lg:mb-0">
+        {
+          heading && (
+            <h2 class="mb-5 border-b pb-4 text-lg font-semibold">{heading}</h2>
+          )
+        }
+        <div class="max-w-full flex-col items-start justify-start">
+          <slot />
+        </div>
+      </div>
+    </div>
+    <div class="backdrop z-40" id={key + 'backdrop'}>
+      <div
+        class="flex h-full w-full flex-col items-end justify-center text-2xl text-gray-300 opacity-85 md:text-3xl"
+      >
+        <IoIosCloseCircle className="mr-4 h-10 w-10 animate-bounce" />
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+</style>
+<script define:vars={{ key }}>
+  const backdropElement = document.querySelector(`#${key}backdrop`);
+  //    const filterCheckbox = document.querySelector('#filter');
+  const filterCheckbox = document.querySelector(`#filter${key}`);
+
+  filterCheckbox.addEventListener('change', () => {
+    backdropElement.classList.toggle('show', filterCheckbox.checked);
+  });
+
+  backdropElement.addEventListener('click', () => {
+    filterCheckbox.checked = false;
+    backdropElement.classList.remove('show');
+  });
+</script>

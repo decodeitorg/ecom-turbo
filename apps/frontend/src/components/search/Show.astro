@@ -1,0 +1,29 @@
+---
+interface Props {
+  limit?: number;
+  sort?: string;
+}
+
+let limit = Astro.props.limit ?? 10;
+---
+
+<div class="flex flex-row items-center">
+  <span class="mr-2">Show :</span>
+  <select
+    onchange="handleShow(event)"
+    class="h-10 w-24 rounded-lg border border-primary pl-1 text-sm font-semibold text-primary"
+  >
+    <option selected={limit == '10'} value="10">10</option>
+    <option selected={limit == '25'} value="25">25</option>
+    <option selected={limit == '50'} value="50">50</option>
+    <option selected={limit == '100'} value="100">100</option>
+  </select>
+</div>
+
+<script async>
+  let handleShow = (e) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('limit', e.target.value);
+    window.location.href = url;
+  };
+</script>

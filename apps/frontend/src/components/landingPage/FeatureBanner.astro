@@ -1,0 +1,12 @@
+---
+let { featureBanner } = Astro.props;
+---
+
+<div class="container aspect-[3/1] w-full">
+   <a href={featureBanner?.link} class="text-black">
+      <!-- <img src={featureBanner?.image} class="mt-12 h-full w-full rounded-lg border-3 border-black object-fill" alt={featureBanner?.alt} /> -->
+      <div class="relative mt-12 aspect-[3/1] overflow-hidden rounded-lg border-3 border-black">
+         <img width={1400} height={1400 / 3} src={featureBanner?.image} class="absolute object-contain" alt={featureBanner?.alt} />
+      </div>
+   </a>
+</div>

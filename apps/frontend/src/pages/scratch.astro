@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+  <head>
+    <title>PWA Push Notifications</title>
+  </head>
+  <body>
+    <button id="notifyBtn">Enable Push Notifications</button>
+    <div id="testNotification" style="display: none; margin-top: 20px;">
+      <input
+        type="text"
+        id="notificationMessage"
+        placeholder="Enter notification message"
+      />
+      <button id="sendTestBtn">Send Test Notification</button>
+    </div>
+    <script>
+      // Check if service workers and push messaging is supported
+      async function initializePushNotifications() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+          console.log('Push notifications not supported');
+          return;
+        }
+
+        try {
+          // Register service worker and wait for it to be active
+          const registration =
+            await navigator.serviceWorker.register('/service-worker.js');
+          await navigator.serviceWorker.ready;
+          console.log('🚀 ~ Service Worker registered and active');
+
+          // Request notification permission
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            console.log('❌ Notification permission denied');
+            return;
+          }
+          console.log('✅ Notification permission granted');
+
+          // Get push subscription
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+              'BND9zrxn5XSECPyO76SKa4Aep5u4plruaxNt67Rq8wIWn0XKiLRw6MDep0cYzTRI44WTp3EA-rs2Y-_jf-xFy9o',
+            ),
+          });
+
+          // Store subscription for later use
+          currentSubscription = subscription;
+
+          // Show test notification form after successful subscription
+          document.getElementById('testNotification').style.display = 'block';
+
+          // Send subscription to server
+          await sendSubscriptionToServer(subscription);
+          console.log('Push notification subscription successful');
+        } catch (error) {
+          console.error('Push notification setup failed:', error);
+        }
+      }
+
+      // Convert VAPID key to correct format
+      function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding)
+          .replace(/\-/g, '+')
+          .replace(/_/g, '/');
+
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      }
+
+      // Modify sendSubscriptionToServer function
+      async function sendSubscriptionToServer(subscription, message = null) {
+        const response = await fetch('/api/scratch', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            subscription,
+            message,
+          }),
+        });
+        return response.json();
+      }
+
+      // Add this after your existing code
+      let currentSubscription = null;
+
+      // Add click handler to button
+      document
+        .getElementById('notifyBtn')
+        .addEventListener('click', initializePushNotifications);
+
+      // Add test notification handler
+      document
+        .getElementById('sendTestBtn')
+        .addEventListener('click', async () => {
+          if (!currentSubscription) {
+            alert('Please enable notifications first');
+            return;
+          }
+
+          const message = document.getElementById('notificationMessage').value;
+          try {
+            await sendSubscriptionToServer(currentSubscription, message);
+            console.log('Test notification sent successfully');
+          } catch (error) {
+            console.error('Error sending test notification:', error);
+          }
+        });
+    </script>
+  </body>
+</html>

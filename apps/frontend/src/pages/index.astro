@@ -1,0 +1,115 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Hero from '@/components/landingPage/Hero.astro';
+import RightSideSpanCategory from '@/components/landingPage/LeftSideSpanCategory.astro';
+import CampaignImages from '@/components/landingPage/CampaignImages.astro';
+import FeatureCategory from '@/components/landingPage/FeatureCategory.astro';
+import FeatureBanner from '@/components/landingPage/FeatureBanner.astro';
+import FeaturedProducts from '@/components/landingPage/FeaturedProducts.astro';
+import UserReviePicturesGalary from '@/components/landingPage/UserReviePicturesGalary.astro';
+import Brands from '@/components/landingPage/Brands.astro';
+import WhyChoseUs from '@/components/landingPage/WhyChoseUs.astro';
+
+import Category from '@/models/Category.ts';
+import Frontend from '@/models/Frontend';
+import UpperCategory from '@/components/common/Header/UpperCategory.astro';
+
+let ParentAndChildrenCategory = (categories, parentId = null) => {
+  const categoryList = [];
+  let Categories;
+  if (parentId == null) {
+    Categories = categories.filter((cat) => cat.parentId == undefined);
+  } else {
+    Categories = categories.filter((cat) => cat.parentId == parentId);
+  }
+  for (let cate of Categories) {
+    categoryList.push({
+      _id: cate._id,
+      name: cate.name,
+      parentId: cate.parentId,
+      parentName: cate.parentName,
+      description: cate.description,
+      icon: cate.icon,
+      status: cate.status,
+      children: ParentAndChildrenCategory(categories, cate._id),
+    });
+  }
+  return categoryList;
+};
+
+const categories = await Category.find({}).sort({ _id: -1 });
+const categoryList = ParentAndChildrenCategory(categories);
+
+let frontend = await Frontend.findOne({});
+
+let {
+  heroCarousel = [],
+  campaignImages = [],
+  featureBanner = {},
+  customerReviewImages = [],
+  brands = [],
+} = frontend ?? {};
+
+let components = frontend?.landingPageComponents ?? [];
+components = components
+  .filter((component) => component.isEnabled)
+  .sort((a, b) => a.order - b.order);
+---
+
+<Layout title={frontend?.name} header="Home">
+  <div class="hidden md:block">
+    <UpperCategory categoryList={categoryList} />
+  </div>
+  <div class="mt-3">
+    <div class="container grid grid-cols-1 gap-2 lg:grid-cols-12">
+      <div class="col-span-2 hidden lg:block">
+        <RightSideSpanCategory categoryList={categoryList} />
+      </div>
+      <div class="col-span-10">
+        <Hero heroCarousel={heroCarousel} />
+      </div>
+    </div>
+
+    <FeaturedProducts />
+    <CampaignImages campaignImages={campaignImages} />
+  </div>
+
+  {
+    components.map((component) => {
+      switch (component.id) {
+        case 'FeatureCategory':
+          return <FeatureCategory categoryList={categoryList} />;
+        case 'HeroCarousel':
+          return <Hero heroCarousel={heroCarousel} />;
+        case 'FeaturedProducts':
+          return <FeaturedProducts />;
+        case 'FeatureBanner':
+          return <FeatureBanner featureBanner={featureBanner} />;
+        case 'CampaignImages':
+          return <CampaignImages campaignImages={campaignImages} />;
+        case 'CustomerReviewImages':
+          return (
+            <UserReviePicturesGalary
+              customerReviewImages={customerReviewImages}
+            />
+          );
+        case 'Brands':
+          return <Brands brands={brands} />;
+        default:
+          return null;
+      }
+    })
+  }
+
+  <FeatureCategory categoryList={categoryList} />
+
+  <CampaignImages campaignImages={campaignImages} />
+  <WhyChoseUs />
+  <UserReviePicturesGalary customerReviewImages={customerReviewImages} />
+  <FeatureBanner featureBanner={featureBanner} />
+
+  <br />
+  <br />
+  <br />
+  <br />
+</Layout>

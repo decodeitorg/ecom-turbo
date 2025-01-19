@@ -1,0 +1,13 @@
+---
+import Layout from '@/layouts/Layout.astro';
+
+import Frontend from '@/models/Frontend';
+import type { FrontendObjType } from '@/utils/types';
+let frontend: FrontendObjType | null = await Frontend.findOne();
+---
+
+<Layout title="Privacy Policy" header="Privacy Policy">
+  <div class="w container prose mx-auto py-8 lg:prose-xl">
+    <div class="rounded-lg px-8 py-6" set:html={frontend?.aboutUs} />
+  </div>
+</Layout>

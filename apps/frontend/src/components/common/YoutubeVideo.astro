@@ -1,0 +1,15 @@
+---
+import { getYoutubeEmbedUrl } from '@/common/youtube';
+let link = Astro.props.link;
+console.log('🚀 ~ link:', link);
+if (!link) return;
+let youtubeEmbedUrl = getYoutubeEmbedUrl(link);
+---
+
+<iframe
+  src={youtubeEmbedUrl}
+  title="YouTube video player"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  class="aspect-video w-full"
+>
+</iframe>

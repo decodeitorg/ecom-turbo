@@ -1,0 +1,79 @@
+---
+// Pagination.astro
+const { totalPages, totalDocs, page, limit } = Astro.props;
+const previousPage = page > 1 ? page - 1 : null;
+const nextPage = page < totalPages ? page + 1 : null;
+
+const MAX_VISIBLE_PAGES = 6; // Number of page numbers to show
+const PAGES_TO_SHOW_ON_EACH_SIDE = 3; // Number of page numbers to show on each side of the current page
+
+// Calculate the range of page numbers to display
+const startPage = Math.max(page - PAGES_TO_SHOW_ON_EACH_SIDE, 1);
+const endPage = Math.min(page + PAGES_TO_SHOW_ON_EACH_SIDE, totalPages);
+const visiblePages = Array.from(
+  { length: endPage - startPage + 1 },
+  (_, i) => startPage + i,
+);
+
+// Add the first and last page numbers if they are not in the visible range
+if (startPage > 1) {
+  visiblePages.unshift(1);
+}
+if (endPage < totalPages) {
+  visiblePages.push(totalPages);
+}
+---
+
+<nav class="my-8 flex justify-center">
+  <div class="flex w-full flex-wrap items-center justify-between gap-4">
+    <ul class="inline-flex -space-x-px">
+      <li class="hidden sm:block">
+        {
+          previousPage && (
+            <a
+              href={`?page=${previousPage}&limit=${limit}`}
+              class="ml-0 rounded-l-lg border border-gray-300 bg-white px-3 py-2 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            >
+              Previous
+            </a>
+          )
+        }
+      </li>
+      {
+        visiblePages.map((pageNumber, index) => (
+          <li>
+            {index > 0 && visiblePages[index] - visiblePages[index - 1] > 1 && (
+              <span class="border border-gray-300 px-3 py-2 leading-tight text-gray-500">
+                ...
+              </span>
+            )}
+            <a
+              href={`?page=${pageNumber}&limit=${limit}`}
+              class={`border border-gray-300 px-3 py-2 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 ${
+                pageNumber === page ? 'bg-secondary text-primary' : ''
+              }`}
+            >
+              {pageNumber}
+            </a>
+          </li>
+        ))
+      }
+      <li class="hidden sm:block">
+        {
+          nextPage && (
+            <a
+              href={`?page=${nextPage}&limit=${limit}`}
+              class="rounded-r-lg border border-gray-300 bg-white px-3 py-2 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            >
+              Next
+            </a>
+          )
+        }
+      </li>
+    </ul>
+    <p>
+      Showing {(page - 1) * limit + 1} to {Math.min(page * limit, totalDocs)} of
+      {totalDocs} ({totalPages} Pages)
+    </p>
+  </div>
+</nav>

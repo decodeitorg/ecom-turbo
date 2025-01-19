@@ -1,0 +1,80 @@
+---
+import { TiTick } from 'react-icons/ti';
+import Button from '../ui/Button';
+import Frontend from '@/models/Frontend';
+// const whyChooseUs = {
+//   title: '100% Trusted Organic Food Store',
+//   points: [
+//     {
+//       title: 'Every day fresh and quality products for you.',
+//       description:
+//         'At our store, we take pride in offering the freshest and highest-quality organic products available. Our dedicated team works tirelessly to ensure that every item on our shelves meets the strictest standards of organic certification, ensuring that you and your family can enjoy the purest, most nutritious food without any harmful additives or chemicals.',
+//     },
+//     {
+//       title: "Nourishing your body and soul with nature's bounty.",
+//       description:
+//         "We believe that food should nourish not only the body but also the soul. That's why we carefully curate our selection to include a wide variety of organic fruits, vegetables, grains, and other wholesome products that are not only delicious but also rich in nutrients and flavors. By choosing organic, you're making a conscious choice to embrace a healthier lifestyle while supporting sustainable farming practices that respect the environment.",
+//     },
+//   ],
+//   image:
+//     'https://cdn-images.decodeit.org/development/deshai/taazn-1717324898509.webp',
+//   image2:
+//     'https://static-01.daraz.com.bd/p/828870f92c1f006041575875fba7c5af.jpg',
+//   button: {
+//     text: 'Learn More',
+//     link: '/about-us',
+//   },
+// };
+
+const frontend = await Frontend.findOne({});
+const whyChooseUs = frontend?.whyChooseUs;
+---
+
+{
+  whyChooseUs && (
+    <section class="container px-3 md:px-0">
+      <div class="relative mx-auto my-28 grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div class="md:order-2">
+          <div class="h-24">
+            <p class="text-[40px] font-semibold leading-[48px] text-[#1a1a1a]">
+              {whyChooseUs?.title}
+            </p>
+          </div>
+          <div>
+            {whyChooseUs?.points.map((point, index) => (
+              <div class="mt-9 flex items-start justify-start pt-6">
+                <div class="mr-3 flex items-center justify-center rounded-full border bg-primary p-1 text-white">
+                  <TiTick className="h-4 w-4" />
+                </div>
+                <div class="">
+                  <p class="text-lg font-medium leading-[27px] text-[#1a1a1a]">
+                    {point?.title}
+                  </p>
+                  <p class="text-sm leading-[21px] text-[#808080]">
+                    {point?.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            <Button className="mt-9 bg-primary text-white">
+              <a href={whyChooseUs?.button.link}>{whyChooseUs?.button.text}</a>
+            </Button>
+          </div>
+        </div>
+        <div class="flex flex-col gap-7 px-3 md:order-1 md:flex-row">
+          <img
+            class="relative h-[310px] w-full rounded-lg border-2 object-cover md:w-5/12"
+            src={whyChooseUs?.image}
+            alt="Descriptive text"
+          />
+          <img
+            class="relative h-[457px] w-full rounded-lg border-2 object-cover md:w-7/12"
+            src={whyChooseUs?.image2}
+            alt="Descriptive text"
+          />
+        </div>
+      </div>
+    </section>
+  )
+}

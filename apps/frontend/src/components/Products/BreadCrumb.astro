@@ -1,0 +1,94 @@
+---
+import { IoMdHome } from 'react-icons/io';
+
+let children_categories = Astro.props.children_categories ?? [];
+let categories = Astro.props.categories ?? [];
+let paths = Astro.props.paths ?? [];
+let active_style = 'text-primary text-xl font-bold';
+---
+
+<!-- breadcrum + Category  -->
+<div class="rounded-xl">
+  <!-- breadcrum -->
+  <nav class="rounded-mdtext-sm sm:text-base">
+    <ol class="flex list-none items-center space-x-2 p-0">
+      <a
+        href="/products"
+        class={`text-gray-600 transition-colors duration-300 hover:text-blue-500 ${paths.length === 0 ? active_style : ''}`}
+      >
+        <li class="flex items-center">
+          <IoMdHome className="h-6 w-6" />
+          <span class="mx-2">/ {paths.length === 0 && 'All Products'}</span>
+        </li>
+      </a>
+      {
+        paths.length > 0 && (
+          <li class="flex items-center">
+            <a
+              href={`/products/${paths?.[0]}`}
+              class={`text-gray-600 transition-colors duration-300 hover:text-blue-500 ${paths.length === 1 ? active_style : ''}`}
+            >
+              {paths[0]}
+            </a>
+            {paths.length > 1 && <span class="mx-2">/</span>}
+          </li>
+        )
+      }
+      {
+        paths.length > 1 && (
+          <li class="flex items-center">
+            <a
+              href={`/products/${paths[0]}/${paths[1]}`}
+              class={`text-gray-600 transition-colors duration-300 hover:text-blue-500 ${paths.length === 2 ? active_style : ''}`}
+            >
+              {paths[1]}
+            </a>
+            {paths.length > 2 && <span class="mx-2">/</span>}
+          </li>
+        )
+      }
+      {
+        paths.length > 2 && (
+          <li class="flex items-center">
+            <a
+              href={`/products/${paths[0]}/${paths[1]}/${paths[2]}`}
+              class="font-bold text-gray-600 transition-colors duration-300 hover:text-blue-500"
+            >
+              {paths[2]}
+            </a>
+          </li>
+        )
+      }
+    </ol>
+  </nav>
+  <!-- Category -->
+  <!-- {
+    children_categories?.length > 0 ? (
+      <div class="mb-4">
+        {children_categories.map((category) => {
+          if (paths.length === 2) {
+            return (
+              <a href={`/products/${paths[0]}/${paths[1]}/${category.name}`}>
+                <div class="center m-1 inline-block select-none whitespace-nowrap rounded-lg px-3.5 py-2 align-baseline font-sans text-xs font-bold uppercase leading-none text-primary">
+                  <div class="mt-px">{category.name}</div>
+                </div>
+              </a>
+            );
+          } else if (paths.length === 1) {
+            return (
+              <a href={`/products/${paths[0]}/${category.name}`}>
+                <div class="center m-1 inline-block select-none whitespace-nowrap rounded-lg px-3.5 py-2 align-baseline font-sans text-xs font-bold uppercase leading-none text-primary">
+                  <div class="mt-px">{category.name}</div>
+                </div>
+              </a>
+            );
+          }
+        })}
+      </div>
+    ) : (
+      categories?.map((category) => {
+        return <div>{category.name}</div>;
+      })
+    )
+  } -->
+</div>

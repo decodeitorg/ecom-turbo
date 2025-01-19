@@ -1,0 +1,105 @@
+---
+import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md';
+let { categoryList = [], className = '' } = Astro.props;
+
+if (categoryList?.length === 0) return ''
+---
+
+<div class="fixed left-0 right-0 top-0 z-50">
+  <div id="upperCategory" class="hidden border-b border-primary">
+    <div class="container flex w-full flex-row bg-white">
+      {
+        categoryList.map((category) => (
+          <div class="group relative border p-2 hover:border-primary">
+            <a
+              href={`/products/${category.name}`}
+              class="grid grid-cols-12 items-center"
+            >
+              <div class="col-span-3">
+                <img
+                  src={category.icon}
+                  alt={category.name}
+                  class="aspect-square h-8 w-full object-fill"
+                />
+              </div>
+              <p class="col-span-8 ml-2">{category.name}</p>
+              <div class="col-span-1 flex justify-end">
+                {category.children.length > 0 && (
+                  <MdKeyboardArrowDown className="h-5 w-5" />
+                )}
+              </div>
+            </a>
+
+            {category.children.length > 0 && (
+              <div class="absolute left-0 top-full z-40 hidden w-52 flex-col bg-white shadow-lg group-hover:flex">
+                {category.children.map((subCategory) => (
+                  <div class="group/subsubmenu relative border p-2 hover:border-primary">
+                    <a
+                      href={`/products/${category.name}/${subCategory.name}`}
+                      class="grid grid-cols-12 items-center"
+                    >
+                      <div class="col-span-3">
+                        <img
+                          src={subCategory.icon}
+                          alt={subCategory.name}
+                          class="aspect-square h-8 w-full object-fill"
+                        />
+                      </div>
+                      <p class="col-span-8 ml-2">{subCategory.name}</p>
+                      <div class="col-span-1 flex justify-end">
+                        {subCategory.children?.length > 0 && (
+                          <MdKeyboardArrowRight className="h-5 w-5" />
+                        )}
+                      </div>
+                    </a>
+
+                    {subCategory.children?.length > 0 && (
+                      <div class="absolute left-full top-0 z-50 hidden w-52 flex-col bg-white shadow-lg group-hover/subsubmenu:flex">
+                        {subCategory.children.map((subSubCategory) => (
+                          <div class="relative border p-2 hover:border-primary">
+                            <a
+                              href={`/products/${category.name}/${subCategory.name}/${subSubCategory.name}`}
+                              class="grid grid-cols-12 items-center"
+                            >
+                              <div class="col-span-3">
+                                <img
+                                  src={subSubCategory.icon}
+                                  alt={subSubCategory.name}
+                                  class="aspect-square h-8 w-full object-fill"
+                                />
+                              </div>
+                              <p class="col-span-9 ml-2">
+                                {subSubCategory.name}
+                              </p>
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<script>
+  const categorySpan = document.getElementById('upperCategory');
+  const showAfterPixels = 300;
+
+  window.addEventListener('scroll', () => {
+    console.log(
+      '🚀 ~ window.addEventListener ~ window.scrollY:',
+      window.scrollY,
+    );
+    if (window.scrollY < showAfterPixels) {
+      categorySpan.classList.add('hidden');
+    } else {
+      categorySpan.classList.remove('hidden');
+    }
+  });
+</script>

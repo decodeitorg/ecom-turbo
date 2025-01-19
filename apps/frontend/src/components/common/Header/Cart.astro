@@ -1,0 +1,32 @@
+---
+import { CiShoppingCart } from 'react-icons/ci';
+import { FaShoppingBag } from 'react-icons/fa';
+---
+
+<a href="/cart" class="relative mr-3">
+  <div
+    class="flex transform flex-col items-center overflow-hidden rounded-full p-1 text-primary transition-all duration-300 ease-in-out hover:scale-105"
+  >
+    <FaShoppingBag size="24" />
+  </div>
+  <span
+    class="cartcount absolute -right-3 -top-2 flex items-center justify-center rounded-full bg-primary px-2 text-background"
+  >
+    0
+  </span>
+</a>
+
+<script>
+  const localStorageSetHandler = function () {
+    // Update the cart item count (you can customize this logic)
+    const cartCount = localStorage.getItem('cart')
+      ? JSON.parse(localStorage.getItem('cart')).length
+      : 0;
+    document.querySelectorAll('.cartcount').forEach((el) => {
+      el.textContent = cartCount;
+    });
+  };
+  localStorageSetHandler(); // Update the cart count on page load
+
+  document.addEventListener('cartItemChange', localStorageSetHandler, false);
+</script>

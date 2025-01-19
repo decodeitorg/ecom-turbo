@@ -1,0 +1,73 @@
+---
+import Drawer from '../ui/Drawer.astro';
+
+interface Props {
+  limit?: number;
+  sort?: string;
+}
+
+let limit = Astro.props.limit ?? 10;
+let sort = Astro.props.sort ?? '';
+---
+
+<div class="flex items-center justify-between">
+  <div class="flex items-center justify-start gap-3 lg:hidden">
+    <!-- <FilterDrawer /> -->
+    <Drawer key="productsFilter" heading="Filters">
+      <slot />
+    </Drawer>
+  </div>
+  <div class="flex justify-end gap-3">
+    <!-- sort by  -->
+    <div class="flex flex-col md:flex-row md:items-center">
+      <span class="mr-2 hidden md:block">Sort By :</span>
+      <select
+        onchange="handleSort(event)"
+        class="w-36 rounded-lg border px-2 py-1 font-semibold text-slate-500"
+      >
+        <option selected={sort == 'createdAt'} value="createdAt">
+          Sort by
+        </option>
+        <option selected={sort == 'salePrice'} value="salePrice">
+          Sale Price: Low to High
+        </option>
+        <option selected={sort == '-salePrice'} value="-salePrice">
+          Sale Price: High to Low
+        </option>
+        <option selected={sort == 'price'} value="price">
+          Price: Low to High
+        </option>
+        <option selected={sort == '-price'} value="-price">
+          Price: High to Low
+        </option>
+      </select>
+    </div>
+    <!-- show  -->
+    <div class="flex flex-col md:flex-row md:items-center">
+      <span class="mr-2 hidden md:block">Show :</span>
+      <select
+        onchange="handleShow(event)"
+        class="rounded-lg border px-2 py-1 font-semibold text-slate-500"
+      >
+        <option selected={limit == '10'} value="10">10</option>
+        <option selected={limit == '25'} value="25">25</option>
+        <option selected={limit == '50'} value="50">50</option>
+        <option selected={limit == '100'} value="100">100</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<script async>
+  let handleShow = (e) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('limit', e.target.value);
+    window.location.href = url;
+  };
+
+  let handleSort = (e) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', e.target.value);
+    window.location.href = url;
+  };
+</script>

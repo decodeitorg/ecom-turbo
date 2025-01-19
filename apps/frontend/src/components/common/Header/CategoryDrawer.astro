@@ -1,0 +1,100 @@
+---
+import Drawer from '@/components/ui/Drawer.astro';
+import { CategoryType } from '@/common/types';
+
+interface Props {
+  categoryList: CategoryType[];
+}
+
+const categories = Astro.props.categoryList;
+
+const renderCategory = (category: CategoryType, level: number) => {
+  const hasChildren = category.children && category.children.length > 0;
+  const paddingLeft = `pl-${4 + level * 4}`;
+  return `
+    <div class="category-item" data-category-id="${category._id}  ">
+        <div class="grid grid-cols-6 items-center gap-3">
+            <div class="col-span-5">
+            <a href="/products/${category.name}">
+                <div class="${paddingLeft} flex cursor-pointer items-center justify-between py-3 hover:bg-stone-100">
+                <div class="${level > 0 ? 'border-l' : ''} flex items-center gap-3 py-2">
+                    <img src="${category.icon}" class="h-${8 - level} w-${8 - level} rounded object-cover" alt="${category.name}" />
+                    <span class="font-medium">${category.name}</span>
+                </div>
+                </div>
+            </a>
+            </div>
+            <div class="col-span-1">
+            ${
+              hasChildren
+                ? `
+                <button class="expand-btn p-2">
+                    <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="h-4 w-4 transform transition-transform duration-200"
+                    >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
+                `
+                : ''
+            }
+            </div>
+        </div>
+
+        ${
+          hasChildren
+            ? `
+                <div class="children-content hidden bg-stone-50 pl-3">
+                ${category.children.map((child) => renderCategory(child, level + 1)).join('')}
+                </div>
+            `
+            : ''
+        }
+    </div>
+
+  `;
+};
+---
+
+<Drawer key="categoryDrawer">
+  <div class="mb-6 flex h-full flex-col items-center justify-center">
+    <h1 class="text-2xl font-bold">Categories</h1>
+    <p class="text-lg">Select a category to view products</p>
+  </div>
+
+  <div class="relative mx-auto w-full max-w-screen-sm items-center">
+    <div id="categoryList" class="w-full overflow-hidden rounded-md">
+      {categories.map((category) => <Fragment set:html={renderCategory(category, 0)} />)}
+    </div>
+  </div>
+
+  <script>
+    const categoryList = document.getElementById('categoryList');
+
+    categoryList.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const expandBtn = target.closest('.expand-btn');
+      const categoryItem = target.closest('.category-item');
+
+      if (expandBtn) {
+        e.stopPropagation();
+        const childrenContent = categoryItem.querySelector('.children-content');
+        const arrow = expandBtn.querySelector('svg');
+
+        if (childrenContent) {
+          childrenContent.classList.toggle('hidden');
+          arrow.classList.toggle('rotate-180');
+        }
+      } else if (categoryItem) {
+        const categoryId = categoryItem.dataset.categoryId;
+        console.log('Category selected:', categoryId);
+        // Add your logic here for category selection
+      }
+    });
+  </script>
+</Drawer>

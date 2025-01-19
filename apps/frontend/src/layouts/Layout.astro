@@ -1,0 +1,153 @@
+---
+import '@/styles/index.css';
+
+import Header from '@/components/common/Header/Header.astro';
+import Footer from '@/components/common/Footer.astro';
+import Category from '@/models/Category';
+import NavigationMobile from '@/components/common/Header/NavigationMobile.astro';
+import PixelHeader from '@/components/facebook/PixelHeader.astro';
+
+import Frontend from '@/models/Frontend';
+import { FrontendObjType } from '@/common/types';
+import Setting from '@/models/Setting';
+
+interface Props {
+  title: string;
+  header: string;
+  description?: string;
+  image?: string;
+  imageAlt?: string;
+  isProductPage?: boolean;
+}
+
+const [frontend, categories, setting] = await Promise.all([
+  Frontend.findOne() as Promise<FrontendObjType | null>,
+  Category.find({}).sort({ _id: -1 }),
+  Setting.findOne(),
+]);
+
+const pixelId = setting?.facebookPixel?.pixelId ?? null;
+
+let ParentAndChildrenCategory = (categories, parentId = null) => {
+  const categoryList = [];
+  let Categories;
+  if (parentId == null) {
+    Categories = categories.filter((cat) => cat.parentId == undefined);
+  } else {
+    Categories = categories.filter((cat) => cat.parentId == parentId);
+  }
+
+  for (let cate of Categories) {
+    categoryList.push({
+      _id: cate._id,
+      name: cate.name,
+      parentId: cate.parentId,
+      parentName: cate.parentName,
+      description: cate.description,
+      icon: cate.icon,
+      status: cate.status,
+      children: ParentAndChildrenCategory(categories, cate._id),
+    });
+  }
+
+  return categoryList;
+};
+
+const categoryList = ParentAndChildrenCategory(categories);
+
+const {
+  title,
+  header,
+  description,
+  image,
+  imageAlt = '',
+  isProductPage = false,
+} = Astro.props;
+const baseUrl = import.meta.env.PUBLIC_SITE;
+const url = Astro.url;
+const href = `${baseUrl}${url.pathname}`;
+---
+
+<!doctype html>
+<html lang="en" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/webp" href={frontend?.logo} />
+
+    <script src="" defer is:inline></script>
+    <title>{title}</title>
+
+    <!-- Basic Meta Tags -->
+    <meta
+      name="description"
+      content={isProductPage ? description : frontend?.description}
+    />
+    <meta name="image" content={isProductPage ? image : frontend?.logo} />
+
+    <!-- Open Graph Meta Tags - use by Facebook, WhatsApp, LinkedIn, etc. -->
+    <meta
+      property="og:title"
+      content={isProductPage ? title : frontend?.name}
+    />
+    <meta
+      property="og:description"
+      content={isProductPage ? description : frontend?.description}
+    />
+    <meta
+      property="og:image"
+      content={isProductPage ? image : frontend?.logo}
+    />
+    <meta
+      property="og:image:alt"
+      content={isProductPage ? imageAlt : frontend?.name}
+    />
+    <meta property="og:url" content={href} />
+    <meta property="og:type" content={isProductPage ? 'product' : 'website'} />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content={isProductPage ? title : frontend?.name}
+    />
+    <meta
+      name="twitter:description"
+      content={isProductPage ? description : frontend?.description}
+    />
+    <meta
+      name="twitter:image"
+      content={isProductPage ? image : frontend?.logo}
+    />
+    <meta
+      name="twitter:image:alt"
+      content={isProductPage ? imageAlt : frontend?.name}
+    />
+    <meta name="twitter:site" content="@yourTwitterHandle" />
+    <meta name="twitter:creator" content="@yourTwitterHandle" />
+
+    <link rel="robots" type="text/plain" href="/robots.txt" />
+
+    <PixelHeader pixelId={pixelId} />
+
+    <script src="/index.js" is:inline></script>
+  </head>
+
+  <body class="antialiased">
+    <Header categoryList={categoryList} />
+
+    <!-- <section class="top-0 z-20 hidden border-b border-t border-primary lg:sticky"> -->
+    <!-- <UpperCategory categoryList={categoryList} /> -->
+    <!-- </section> -->
+
+    <section class="min-h-80">
+      <slot />
+    </section>
+
+    <nav class="fixed bottom-0 left-0 right-0 w-full lg:hidden">
+      <NavigationMobile categoryList={categoryList} />
+    </nav>
+
+    <Footer />
+  </body>
+</html>

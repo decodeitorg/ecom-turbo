@@ -1,0 +1,15 @@
+---
+import Carousel from '@/components/ui/Carousel.astro';
+
+let { heroCarousel } = Astro.props;
+---
+
+<Carousel
+  images={heroCarousel}
+  autoPlay={true}
+  interval={3000}
+  showArrows={true}
+  showDots={true}
+  objectFit="object-cover"
+  aspectRatio="aspect-video md:aspect-[16/7]"
+/>

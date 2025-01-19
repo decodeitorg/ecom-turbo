@@ -1,0 +1,19 @@
+{
+    "name": "turbopack-monorepo-test",
+    "private": true,
+    "scripts": {
+        "dev": "turbo dev",
+        "build": "turbo @repo/admin#build && turbo @repo/frontend#build",
+        "preview": "node apps/frontend/dist/server/entry.mjs",
+        "start": "node apps/frontend/dist/server/entry.mjs"
+    },
+    "devDependencies": {
+        "prettier": "^3.2.5",
+        "turbo": "^2.3.3",
+        "typescript": "5.5.4"
+    },
+    "packageManager": "pnpm@9.0.0",
+    "engines": {
+        "node": ">=18"
+    }
+}

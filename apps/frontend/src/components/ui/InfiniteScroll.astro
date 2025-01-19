@@ -1,0 +1,96 @@
+---
+// InfiniteScroll.astro
+interface Props {
+    images: string[];
+    speed?: number;
+}
+const {
+    images,
+    speed = 1000, // pixels per frame
+} = Astro.props;
+
+let minImages = 8;
+let imagesLength = images.length;
+if (imagesLength < minImages) {
+    let diff = minImages - imagesLength;
+    for (let i = 0; i < diff; i++) {
+        images.push(images[i]);
+    }
+}
+---
+
+<div class="inner">
+    <div class="wrapper">
+        <section style={{ "--speed": `${speed}ms` }}>
+            {
+                images.map(({ _id, image }) => (
+                    <div class="image" key={_id}>
+                        <img src={image} alt={_id} />
+                    </div>
+                ))
+            }
+        </section>
+        <section style={{ "--speed": `${speed}ms` }}>
+            {
+                images.map(({ _id, image }) => (
+                    <div class="image" key={_id}>
+                        <img src={image} alt={_id} />
+                    </div>
+                ))
+            }
+        </section>
+        <section style={{ "--speed": `${speed}ms` }}>
+            {
+                images.map(({ _id, image }) => (
+                    <div class="image" key={_id}>
+                        <img src={image} alt={_id} />
+                    </div>
+                ))
+            }
+        </section>
+    </div>
+</div>
+<style>
+    .App {
+        font-family: sans-serif;
+        text-align: center;
+    }
+
+    img {
+        max-width: 150px;
+        height: 5rem;
+        padding: 0 20px;
+        object-fit: cover;
+    }
+
+    img:last-of-type {
+        padding-left: 0;
+    }
+
+    .inner {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        height: 5rem;
+    }
+
+    .wrapper {
+        position: absolute;
+        display: flex;
+    }
+
+    section {
+        display: flex;
+        animation: swipe var(--speed) linear infinite backwards;
+    }
+
+    @keyframes swipe {
+        0% {
+            transform: translate(0);
+        }
+
+        100% {
+            transform: translate(-100%);
+        }
+    }
+</style>

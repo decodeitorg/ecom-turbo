@@ -1,0 +1,22 @@
+---
+import Frontend from '@/models/Frontend';
+import type { FrontendObjType } from '@/utils/types';
+import { FaFacebookMessenger } from 'react-icons/fa6';
+
+interface Props {
+  textColor?: string;
+}
+
+let textColor = Astro.props.textColor ?? '';
+let frontend: FrontendObjType | null = await Frontend.findOne();
+---
+
+<a href={frontend?.facebook}>
+  <div class="flex flex-col items-center justify-center lg:flex-row lg:gap-1">
+    <FaFacebookMessenger
+      id="mobile_nav_chat"
+      className={`h-7 w-7 text-primary ${textColor}`}
+    />
+    <!-- <p class={`text-primary ${textColor}`}>Chat</p> -->
+  </div>
+</a>

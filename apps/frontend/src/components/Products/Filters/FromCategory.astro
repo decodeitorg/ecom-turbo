@@ -1,0 +1,230 @@
+---
+
+import Attribute from '@/models/Attribute';
+import Category from '@/models/Category';
+
+const { category, subCategory, leafCategory } = Astro.props;
+
+const attributes = await Attribute.find({
+  status: 'show',
+});
+
+function mergeArraysByName(arr) {
+  const mergedArr = [];
+
+  arr.forEach((obj) => {
+    const existing = mergedArr.find(
+      (o) => o.name.toLowerCase() === obj.name.toLowerCase(),
+    );
+    if (existing) {
+      existing.variants = existing.variants.concat(obj.variants);
+    } else {
+      mergedArr.push(obj);
+    }
+  });
+
+  return mergedArr;
+}
+
+let allAttributes = [];
+
+if (leafCategory) {
+  const leafCategoryAttributes = attributes.filter((attr) => {
+    return (
+      attr.type === 'unique' &&
+      attr.category_id.toString() === leafCategory.toString()
+    );
+  });
+
+  const leafCategoryAttributesExtendedParent = attributes.filter((attr) => {
+    return (
+      attr.type === 'extend_parent' &&
+      attr.category_id.toString() === leafCategory.toString()
+    );
+  });
+  allAttributes = [...leafCategoryAttributesExtendedParent, ...allAttributes];
+
+  const subCategoryAttributes = attributes.filter((attr) => {
+    return (
+      attr.type === 'unique' &&
+      attr.category_id.toString() === subCategory.toString()
+    );
+  });
+
+  const categoryAttributes = attributes.filter((attr) => {
+    return (
+      attr.type === 'unique' &&
+      attr.category_id.toString() === category.toString()
+    );
+  });
+
+  allAttributes = [
+    ...allAttributes,
+    ...leafCategoryAttributes,
+    ...subCategoryAttributes,
+    ...categoryAttributes,
+  ];
+} else if (subCategory) {
+  const subCategoryAttributes = attributes.filter((attr) => {
+    return (
+      attr.type === 'unique' &&
+      attr.category_id.toString() === subCategory.toString()
+    );
+  });
+
+  const subCategoryAttributesExtendedParent = attributes.filter((attr) => {
+    return (
+      attr.type === 'extend_parent' &&
+      attr.category_id.toString() === subCategory.toString()
+    );
+  });
+  allAttributes = [...subCategoryAttributesExtendedParent, ...allAttributes];
+
+  const all_id = await Category.find({ parentId: subCategory }, { _id: 1 });
+
+  const leafCategoryAttributesExtendedParent = attributes.filter((attr) => {
+    return (
+      attr.type === 'extend_parent' &&
+      all_id
+        .map((id) => id._id.toString())
+        .includes(attr.category_id.toString())
+    );
+  });
+  allAttributes = [
+    ...mergeArraysByName(leafCategoryAttributesExtendedParent),
+    ...allAttributes,
+  ];
+
+  const categoryAttributes = attributes.filter((attr) => {
+    return (
+      attr.type === 'unique' &&
+      attr.category_id.toString() === category.toString()
+    );
+  });
+
+  allAttributes = [
+    ...allAttributes,
+    ...subCategoryAttributes,
+    ...categoryAttributes,
+  ];
+} else if (category) {
+  const categoryAttributes = attributes.filter((attr) => {
+    return (
+      attr.type === 'unique' &&
+      attr.category_id?.toString() === category.toString()
+    );
+  });
+
+  const categoryAttributesExtendedParent = attributes.filter((attr) => {
+    return (
+      attr.type === 'extend_parent' &&
+      attr.category_id.toString() === category.toString()
+    );
+  });
+  allAttributes = [...categoryAttributesExtendedParent, ...allAttributes];
+
+  // const all_id = await Category.find({ parentId: category }, { _id: 1 });
+
+  // const subCategoryAttributesExtendedParent = attributes.filter((attr) => {
+  //    return attr.type === 'extend_parent' && all_id.map((id) => id._id.toString()).includes(attr.category_id.toString());
+  // });
+  // allAttributes = [...mergeArraysByName(subCategoryAttributesExtendedParent), ...allAttributes];
+
+  allAttributes = [...allAttributes, ...categoryAttributes];
+}
+
+let filter = Astro.url.searchParams;
+const filters = filter.get('filter')?.split('_');
+---
+
+{
+  allAttributes?.map((attr) => {
+    return (
+      <div class="w-full">
+        <div class="flex w-full items-center justify-between">
+          <p class="text-lg font-bold text-primary">{attr.name}</p>
+          <p class="cursor-pointer transition-all duration-300 ease-in-out hover:text-primary">
+            Reset
+          </p>
+        </div>
+        <div class="max-h-96 overflow-y-auto">
+          {attr?.variants?.map((variant, index) => {
+            return (
+              <div class="flex w-full items-center justify-between py-2">
+                <div class="flex items-center justify-start gap-2">
+                  <input
+                    onclick="handleCheckboxChange(event)"
+                    checked={
+                      filters?.includes(variant?._id.toString()) ? true : false
+                    }
+                    type="radio"
+                    id={variant?._id}
+                    class="after:w-\[35%\] after:h-\[53%\] after:top-\[40%\] after:left-\[50%\] after:rotate-\[25deg\] after:drop-shadow-\[1px\_0.5px\_1px\_rgba(56,149,248,0.5)\] after:border-r-\[0.17em\] after:border-b-\[0.17em\] relative aspect-square h-5 w-5 cursor-pointer !appearance-none rounded border border-primary bg-secondary !bg-none !text-transparent shadow-sm !outline-none !ring-0 !ring-offset-0 transition-all duration-300 ease-in-out after:absolute after:-translate-x-2/4 after:-translate-y-2/4 after:border-b-white after:border-r-white after:opacity-0 after:transition-all after:duration-200 after:ease-linear checked:!border-sky-400 checked:!bg-gradient-to-tr checked:!from-primary checked:!to-white checked:after:rotate-45 checked:after:opacity-100 hover:!border-sky-400 focus-visible:border-sky-400 focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-sky-400/30"
+                  />
+                  <label class="text-md">{variant.name}</label>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  })
+}
+
+<script async>
+  let searchParams = new URLSearchParams(window.location.search);
+
+  // Save scroll position before the page reloads
+  window.onbeforeunload = function () {
+    sessionStorage.setItem('scrollPosition', window.scrollY);
+    document
+      .querySelectorAll('.overflow-y-auto')
+      .forEach((container, index) => {
+        sessionStorage.setItem(
+          `containerScrollPosition_${index}`,
+          container.scrollTop,
+        );
+      });
+  };
+
+  // Restore scroll position after the page reloads
+  window.onload = function () {
+    let scrollPosition = sessionStorage.getItem('scrollPosition');
+    if (scrollPosition !== null) {
+      window.scrollTo(0, parseInt(scrollPosition, 10));
+      sessionStorage.removeItem('scrollPosition');
+    }
+    document
+      .querySelectorAll('.overflow-y-auto')
+      .forEach((container, index) => {
+        let containerScrollPosition = sessionStorage.getItem(
+          `containerScrollPosition_${index}`,
+        );
+        if (containerScrollPosition !== null) {
+          container.scrollTop = parseInt(containerScrollPosition, 10);
+          sessionStorage.removeItem(`containerScrollPosition_${index}`);
+        }
+      });
+  };
+
+  function handleCheckboxChange(event) {
+    let _id = event.target.id;
+    let filter = searchParams.get('filter');
+    if (filter) {
+      let filters = filter.split('_');
+      let index = filters.indexOf(_id);
+      if (index > -1) {
+        filters.splice(index, 1);
+      } else {
+        filters.push(_id);
+      }
+      if (filters.length == 0) {
+        searchParams.delete('filter');
+      } else searchParams.set('filter', filters.join('_'));
+    } else {
+      searchParams.set('filter', _id);
+    }
+    window.location.search = searchParams.toString();
+  }
+</script>

@@ -1,0 +1,139 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Product from '@/models/Product.ts';
+import ProductCard from '@/components/common/ProductCard.astro';
+import PageTitle from '@/components/Typography/PageTitle';
+import Pagination from '@/components/Products/Pagination.astro';
+import Show from '@/components/search/Show.astro';
+import { populateVariantsAttributes } from '@/utils/pipeline';
+
+let data = null;
+let search = Astro.url.searchParams.get('search') ?? '';
+let page = parseInt(Astro.url.searchParams.get('page') || '1');
+let limit = parseInt(Astro.url.searchParams.get('limit') || '10');
+const skip = Number((page - 1) * limit);
+
+try {
+  data = await Product.aggregate([
+    {
+      $match: {
+        isPublished: {
+          $ne: false,
+        },
+      },
+    },
+    ...populateVariantsAttributes(),
+
+    {
+      $project: {
+        name: 1,
+        slug: 1,
+        images: 1,
+        price: 1,
+        salePrice: 1,
+        isHomeDeliveryFree: 1,
+        status: 1,
+        isPublished: 1,
+        hasVariants: 1,
+        variants: 1,
+        variantsAttributes: 1,
+      },
+    },
+    {
+      $match: {
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+        ],
+      },
+    },
+    {
+      $sort: { createdAt: -1 },
+    },
+    {
+      $match: { isPublished: true },
+    },
+    // // ...productFacet(priceRange.min, priceRange.max),
+    {
+      $facet: {
+        docs: [{ $skip: skip }, { $limit: limit }],
+        totalDocs: [
+          {
+            $count: 'createdAt',
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        docs: 1,
+        totalPages: {
+          $ceil: {
+            $divide: [{ $first: '$totalDocs.createdAt' }, limit],
+          },
+        },
+        totalDocs: { $first: '$totalDocs.createdAt' },
+      },
+    },
+    {
+      $addFields: {
+        page: page,
+        limit: limit,
+      },
+    },
+  ]);
+} catch (e) {
+  Astro.redirect('/404');
+}
+
+let products = data?.[0]?.docs;
+
+products.map((p) => console.log(p.status));
+---
+
+<Layout title="Search Page" header="Search">
+  <div class="container">
+    <div class="flex items-center justify-between">
+      <PageTitle>
+        Search Results for : {search}
+      </PageTitle>
+      <Show limit={limit} />
+    </div>
+
+    {
+      !products ? (
+        <>
+          <p class="my-16 p-12">No Product Found</p>
+        </>
+      ) : (
+        <div class="mt-9 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-3">
+          {products.length > 0 &&
+            products.map((product, index) => (
+              <ProductCard
+                key={'productofSearchPage'}
+                product={{
+                  _id: product._id,
+                  name: product.name,
+                  slug: product.slug,
+                  status: product.status,
+                  images: product.images,
+                  price: product.price,
+                  salePrice: product.salePrice,
+                  isHomeDeliveryFree: product.isHomeDeliveryFree,
+                  hasVariants: product.hasVariants,
+                  variants: product.variants,
+                  variantsAttributes: product.variantsAttributes,
+                }}
+              />
+            ))}
+        </div>
+      )
+    }
+    <Pagination
+      totalPages={data?.[0]?.[0]?.totalPages}
+      totalDocs={data?.[0]?.[0]?.totalDocs}
+      page={page}
+      limit={limit}
+    />
+  </div>
+</Layout>

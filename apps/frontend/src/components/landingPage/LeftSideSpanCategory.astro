@@ -1,0 +1,83 @@
+---
+import { MdKeyboardArrowRight } from 'react-icons/md';
+import UpperCategory from '../common/Header/UpperCategory.astro';
+
+let { categoryList } = Astro.props;
+---
+
+<!-- rightSideSpanCategory -->
+<div class="rightSideSpanCategory w-full">
+  {
+    categoryList.map((category) => (
+      <div class="group relative border p-2 hover:border-primary">
+        <a
+          href={`/products/${category.name}`}
+          class="grid grid-cols-12 items-center"
+        >
+          <div class="col-span-3">
+            <img
+              src={category.icon}
+              alt={category.name}
+              class="aspect-square w-full object-fill"
+            />
+          </div>
+          <p class="col-span-8 ml-2">{category.name}</p>
+          <div class="col-span-1 flex justify-end">
+            {category.children.length > 0 && (
+              <MdKeyboardArrowRight className="h-5 w-5" />
+            )}
+          </div>
+        </a>
+
+        {category.children.length > 0 && (
+          <div class="absolute left-[101%] top-0 z-40 hidden w-52 flex-col bg-white shadow-lg group-hover:flex">
+            {category.children.map((subCategory) => (
+              <div class="group/subsubmenu relative border p-2 hover:border-primary">
+                <a
+                  href={`/products/${category.name}/${subCategory.name}`}
+                  class="grid grid-cols-12 items-center"
+                >
+                  <div class="col-span-3">
+                    <img
+                      src={subCategory.icon}
+                      alt={subCategory.name}
+                      class="aspect-square w-full object-fill"
+                    />
+                  </div>
+                  <p class="col-span-8 ml-2">{subCategory.name}</p>
+                  <div class="col-span-1 flex justify-end">
+                    {subCategory.children.length > 0 && (
+                      <MdKeyboardArrowRight className="h-5 w-5" />
+                    )}
+                  </div>
+                </a>
+
+                {subCategory.children?.length > 0 && (
+                  <div class="absolute left-[101%] top-0 z-50 hidden w-52 flex-col bg-white shadow-lg group-hover/subsubmenu:flex">
+                    {subCategory.children.map((subSubCategory) => (
+                      <div class="group/subsubmenu relative border p-2 hover:border-primary">
+                        <a
+                          href={`/products/${category.name}/${subCategory.name}/${subSubCategory.name}`}
+                          class="grid grid-cols-12 items-center"
+                        >
+                          <div class="col-span-3">
+                            <img
+                              src={subSubCategory.icon}
+                              alt={subSubCategory.name}
+                              class="aspect-square w-full object-fill"
+                            />
+                          </div>
+                          <p class="ml-2">{subSubCategory.name}</p>
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ))
+  }
+</div>

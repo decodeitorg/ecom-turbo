@@ -1,0 +1,20 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import CartPage from '@/components/CartPage';
+import Setting from '@/models/Setting';
+
+let setting = await Setting.findOne();
+let isPaymentEnabled = setting?.sslCommerz?.isSslCommerzEnabled ?? false;
+let shippingLocationFee = setting?.shippingLocationFee ?? 0;
+let takeShippingFeeAdvance = setting?.takeShippingFeeAdvance ?? false;
+shippingLocationFee = JSON.parse(JSON.stringify(shippingLocationFee ?? 0));
+---
+
+<Layout title="Cart Page" header="Cart">
+  <CartPage
+    client:only="react"
+    isPaymentEnabled={isPaymentEnabled}
+    takeShippingFeeAdvance={takeShippingFeeAdvance}
+    shippingLocationFee={shippingLocationFee}
+  />
+</Layout>

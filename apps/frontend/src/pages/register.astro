@@ -1,0 +1,164 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { app } from '@/firebase/server.ts';
+import { getAuth } from 'firebase-admin/auth';
+import Attribute from '@/models/Attribute';
+let redirectUrl = Astro.url.searchParams.get('redirect') || '';
+
+const auth = getAuth(app);
+---
+
+<Layout title="Register" header="Register">
+  <div class="flex min-h-screen items-center justify-center bg-gray-100">
+    <div class="w-full max-w-sm rounded-lg bg-white p-6 shadow-md">
+      <div class="redirectUrl hidden" set:html={redirectUrl} />
+
+      <div class="mt-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-gray-900">Register</h2>
+          <p class="text-sm text-gray-600">Enter your email and password to create an account</p>
+        </div>
+        <form id="register-form" class="space-y-6" autocomplete="on">
+          <div class="space-y-2">
+            <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              placeholder="John Doe"
+              required
+              class="w-full rounded-md border border-gray-300 px-3 py-2 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-describedby="name-error"
+            />
+            <p id="name-error" class="hidden text-sm text-red-500"></p>
+          </div>
+
+          <div class="space-y-2">
+            <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="m@example.com"
+              required
+              class="w-full rounded-md border border-gray-300 px-3 py-2 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-describedby="email-error"
+            />
+            <p id="email-error" class="hidden text-sm text-red-500"></p>
+          </div>
+
+          <div class="space-y-2">
+            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minlength="8"
+              class="w-full rounded-md border border-gray-300 px-3 py-2 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-describedby="password-error"
+            />
+            <p id="password-error" class="hidden text-sm text-red-500"></p>
+          </div>
+
+          <div class="space-y-2">
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              required
+              minlength="8"
+              class="w-full rounded-md border border-gray-300 px-3 py-2 transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-describedby="confirmPassword-error"
+            />
+            <p id="confirmPassword-error" class="hidden text-sm text-red-500"></p>
+          </div>
+
+          <div class="flex items-center">
+            <input id="terms" name="terms" type="checkbox" required class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+            <label for="terms" class="ml-2 block text-sm text-gray-900">
+              I agree to the <a href="#" class="text-blue-600 hover:underline">Terms and Conditions</a>
+            </label>
+          </div>
+
+          <div id="form-error" class="text-sm text-red-500"></div>
+
+          <button
+            type="submit"
+            class="w-full rounded-md bg-blue-600 px-3 py-2 font-semibold text-white transition duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Register
+          </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <a href={`/login${redirectUrl ? `?redirect=${redirectUrl}` : ''}`} class="text-blue-600 hover:underline">Sign up</a>
+        </div>
+      </div>
+
+      <script>
+        const registerForm = document.querySelector('#register-form');
+        const errorMessage = document.querySelector('#error-message');
+        const redirectUrl = document.querySelector('.redirectUrl') as HTMLDivElement;
+
+        registerForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          let formData = new FormData(registerForm);
+          let name = formData.get('name');
+          let email = formData.get('email');
+          let password = formData.get('password');
+          let confirmPassword = formData.get('confirmPassword');
+          let baseURL = import.meta.env.PUBLIC_SITE;
+
+          // Validate password
+          if (password.length < 8) {
+            errorMessage.textContent = 'Password must be at least 8 characters';
+            return;
+          }
+
+          // Validate confirm password
+          if (password !== confirmPassword) {
+            errorMessage.textContent = 'Confirm password does not match';
+            return;
+          }
+
+          try {
+            let res = await fetch(baseURL + '/api/auth/register', {
+              method: 'POST',
+              body: JSON.stringify({
+                name,
+                email,
+                password,
+                confirmPassword,
+              }),
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+
+            let data = await res.json();
+            if (res.ok) {
+              let token = data.data.token;
+              localStorage.setItem('token', token);
+
+              let userData = data.data.userData;
+              let role = userData.role;
+              if (role === 'Admin' || role === 'SuperAdmin') {
+                window.location.href = '/admin';
+              } else {
+                window.location.href = '/' + redirectUrl.innerHTML || '';
+              }
+            } else {
+              errorMessage.textContent = data.message;
+            }
+          } catch (e) {
+            // Alert(e.message, true);
+          }
+        });
+      </script>
+    </div>
+  </div>
+</Layout>

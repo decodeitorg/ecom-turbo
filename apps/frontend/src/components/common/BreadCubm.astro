@@ -1,0 +1,46 @@
+---
+import Category from '@/models/Category';
+import { FaHome } from 'react-icons/fa';
+const { productCategory, productSubCategory, productLeafCategory } =
+  Astro.props;
+
+let categoryData = await Promise.all([
+  Category.findOne({ _id: productCategory }, { name: 1 }),
+  Category.findOne({ _id: productSubCategory }, { name: 1 }),
+  Category.findOne({ _id: productLeafCategory }, { name: 1 }),
+]);
+---
+
+<section class="relative my-4">
+  <!-- <img
+        src="https://cdn-images.decodeit.org/development/deshai/taazbreadcrumbs-1717334054958.webp"
+        alt="breadcumb"
+        class="h-20 w-full object-cover"
+    /> -->
+  <div class="left-0 top-0 flex h-full w-full items-center justify-center">
+    <div class="container flex items-center justify-start text-gray-400">
+      <a href="/products" class="flex items-center justify-start gap-2">
+        <FaHome className="h-6 w-6" />
+        <p class="ml-2">/ Category</p>
+      </a>
+      {
+        categoryData?.reduce((acc, item, index) => {
+          if (item) {
+            const link = `${acc}/${item.name}`;
+            return (
+              <a
+                href={`/products${link}`}
+                class="flex items-center justify-start gap-2"
+              >
+                <div class="flex items-center justify-start gap-2">
+                  <p class="ml-2">/ {item.name}</p>
+                </div>
+              </a>
+            );
+          }
+          return acc;
+        }, '')
+      }
+    </div>
+  </div>
+</section>

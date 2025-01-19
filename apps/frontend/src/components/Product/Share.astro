@@ -1,0 +1,76 @@
+---
+let { productUrl = '' } = Astro.props;
+
+import { CiMail } from 'react-icons/ci';
+import { BsTwitterX } from 'react-icons/bs';
+import {
+  FaFacebookMessenger,
+  FaWhatsapp,
+  FaLinkedinIn,
+  FaTelegramPlane,
+  FaRedditAlien,
+  FaRegCopy,
+} from 'react-icons/fa';
+---
+
+<!-- share the url in different social media platforms and add a copy link button --><!-- use tailwind for design  -->
+<div class="my-6 flex items-center justify-start gap-3">
+  <div class="font-semibold text-gray-600">Share :</div>
+  <!-- <a href={`https://www.facebook.com/sharer/sharer.php?display=popup&u=${productUrl}&quote=Awesome%20Blog!`} target="_blank" rel="noreferrer">
+      <FaFacebook className="text-lg text-blue-500" />
+   </a>
+   <a href={`https://www.facebook.com/dialog/send?app_id=123050457758183&link=${productUrl}`} target="_blank" rel="noreferrer">
+      <FaFacebookMessenger className="text-lg text-blue-500" />
+   </a> -->
+  <a
+    href={`https://api.whatsapp.com/send?text=${productUrl}`}
+    target="_blank"
+    rel="noreferrer"
+  >
+    <FaWhatsapp className="text-lg text-green-500" />
+  </a>
+  <a
+    href={`mailto:?subject=Check out this product&body=${productUrl}`}
+    target="_blank"
+    rel="noreferrer"
+  >
+    <CiMail className="text-lg text-red-500" />
+  </a>
+  <a
+    href={`https://www.linkedin.com/shareArticle?mini=true&url=${productUrl}`}
+    target="_blank"
+    rel="noreferrer"
+  >
+    <FaLinkedinIn className="text-lg text-blue-500" />
+  </a>
+  <a
+    href={`https://t.me/share/url?url=${productUrl}`}
+    target="_blank"
+    rel="noreferrer"
+  >
+    <FaTelegramPlane className="text-lg text-blue-500" />
+  </a>
+  <a
+    href={`https://twitter.com/intent/tweet?url=${productUrl}`}
+    target="_blank"
+    rel="noreferrer"
+  >
+    <BsTwitterX className="text-lg text-blue-500" />
+  </a>
+  <a
+    href={`https://www.reddit.com/submit?url=${productUrl}`}
+    target="_blank"
+    rel="noreferrer"
+  >
+    <FaRedditAlien className="text-lg text-orange-500" />
+  </a>
+  <button id="copyLinkButton" class="text-lg text-blue-500">
+    <FaRegCopy />
+  </button>
+</div>
+
+<script define:vars={{ productUrl }}>
+  document.getElementById('copyLinkButton').addEventListener('click', () => {
+    navigator.clipboard.writeText(productUrl);
+  });
+</script>

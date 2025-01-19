@@ -1,0 +1,49 @@
+{/* <!-- stock( instock outofstock) --> */}
+<div class="w-full">
+  <div class="flex w-full items-center justify-between">
+    <p class="text-lg font-bold text-primary">Stock</p>
+    <p
+      class="cursor-pointer transition-all duration-300 ease-in-out hover:text-primary"
+    >
+      Reset
+    </p>
+  </div>
+  <div class="flex w-full items-center justify-between py-2">
+    <div class="flex items-center justify-start gap-2">
+      <input
+        checked
+        type="radio"
+        name="stock"
+        id="instock"
+        class="after:w-\[35%\] after:h-\[53%\] after:top-\[40%\] after:left-\[50%\] after:rotate-\[25deg\] after:drop-shadow-\[1px\_0.5px\_1px\_rgba(56,149,248,0.5)\] after:border-r-\[0.17em\] after:border-b-\[0.17em\] relative aspect-square h-5 w-5 cursor-pointer !appearance-none rounded border border-primary bg-secondary !bg-none !text-transparent shadow-sm !outline-none !ring-0 !ring-offset-0 transition-all duration-300 ease-in-out after:absolute after:-translate-x-2/4 after:-translate-y-2/4 after:border-b-white after:border-r-white after:opacity-0 after:transition-all after:duration-200 after:ease-linear checked:!border-sky-400 checked:!bg-gradient-to-tr checked:!from-primary checked:!to-white checked:after:rotate-45 checked:after:opacity-100 hover:!border-sky-400 focus-visible:border-sky-400 focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-sky-400/30"
+      />
+      <label class="text-md" htmlFor="instock">In Stock</label>
+    </div>
+  </div>
+  <div class="flex w-full items-center justify-between py-2">
+    <div class="flex items-center justify-start gap-2">
+      <input
+        checked
+        type="radio"
+        name="stock"
+        id="outofstock"
+        class="after:w-\[35%\] after:h-\[53%\] after:top-\[40%\] after:left-\[50%\] after:rotate-\[25deg\] after:drop-shadow-\[1px\_0.5px\_1px\_rgba(56,149,248,0.5)\] after:border-r-\[0.17em\] after:border-b-\[0.17em\] relative aspect-square h-5 w-5 cursor-pointer !appearance-none rounded border border-primary bg-secondary !bg-none !text-transparent shadow-sm !outline-none !ring-0 !ring-offset-0 transition-all duration-300 ease-in-out after:absolute after:-translate-x-2/4 after:-translate-y-2/4 after:border-b-white after:border-r-white after:opacity-0 after:transition-all after:duration-200 after:ease-linear checked:!border-sky-400 checked:!bg-gradient-to-tr checked:!from-primary checked:!to-white checked:after:rotate-45 checked:after:opacity-100 hover:!border-sky-400 focus-visible:border-sky-400 focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-sky-400/30"
+      />
+      <label class="text-md" htmlFor="outofstock">Upcoming</label>
+    </div>
+  </div>
+</div>
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const stock = urlParams.get('stock');
+
+  document.querySelectorAll('input[name="stock"]').forEach((radioButton) => {
+    // Set the checked property based on the stock parameter
+    radioButton.checked = radioButton.id === stock;
+
+    radioButton.addEventListener('click', () => {
+      urlParams.set('stock', radioButton.id);
+      window.location.search = urlParams.toString();
+    });
+  });
+</script>

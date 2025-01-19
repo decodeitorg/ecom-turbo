@@ -1,0 +1,218 @@
+---
+interface props {
+  images: {
+    image: string;
+    alt: string;
+    link: string;
+  }[];
+  autoPlay?: boolean;
+  interval?: number;
+  showArrows?: boolean;
+  showDots?: boolean;
+  aspectRatio?: 'aspect-square' | 'aspect-video';
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  height?: number;
+  draggable?: boolean;
+}
+
+const {
+  images,
+  autoPlay = true,
+  interval = 5000,
+  showArrows = true,
+  showDots = true,
+  aspectRatio = 'aspect-video',
+  height,
+  objectFit = 'cover',
+  draggable = true,
+} = Astro.props;
+---
+
+<div
+  class="carousel relative h-full w-full overflow-hidden"
+  data-autoplay={autoPlay.toString()}
+  data-interval={interval.toString()}
+  data-draggable={draggable.toString()}
+>
+  <div
+    class="carousel-inner flex transition-transform duration-300 ease-in-out"
+  >
+    {
+      images.map((image, index) => (
+        <div class="carousel-item h-full w-full flex-none" data-index={index}>
+          <a href={image.link}>
+            <img
+              src={image.image}
+              alt={image.alt}
+              class={`w-full ${objectFit} ${height ? height : aspectRatio} rounded`}
+              draggable="false"
+            />
+          </a>
+        </div>
+      ))
+    }
+  </div>
+
+  {
+    showArrows && (
+      <>
+        <button class="carousel-control prev absolute left-4 top-1/2 -translate-y-1/2 cursor-pointer border border-black bg-black bg-opacity-50 p-2 text-white">
+          &lt;
+        </button>
+        <button class="carousel-control next absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer border border-black bg-black bg-opacity-50 p-2 text-white">
+          &gt;
+        </button>
+      </>
+    )
+  }
+
+  {
+    showDots && (
+      <div class="carousel-dots absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+        {images.map((_, index) => (
+          <button
+            class="dot h-3 w-3 rounded-full border border-black bg-white bg-opacity-50 transition-opacity hover:bg-opacity-100"
+            data-index={index}
+          />
+        ))}
+      </div>
+    )
+  }
+</div>
+
+<script>
+  class Carousel {
+    constructor(element, options) {
+      this.carousel = element;
+      this.inner = this.carousel.querySelector('.carousel-inner');
+      this.items = this.carousel.querySelectorAll('.carousel-item');
+      this.prev = this.carousel.querySelector('.prev');
+      this.next = this.carousel.querySelector('.next');
+      this.dots = this.carousel.querySelectorAll('.dot');
+
+      this.currentIndex = 0;
+      this.options = options;
+      this.isDragging = false;
+      this.startPos = 0;
+      this.currentTranslate = 0;
+      this.prevTranslate = 0;
+      this.animationID = 0;
+
+      this.initEventListeners();
+      if (this.options.autoPlay) {
+        this.startAutoPlay();
+      }
+    }
+
+    initEventListeners() {
+      if (this.prev) this.prev.addEventListener('click', () => this.showPrev());
+      if (this.next) this.next.addEventListener('click', () => this.showNext());
+      this.dots.forEach((dot) => {
+        dot.addEventListener('click', () => {
+          this.showSlide(parseInt(dot.dataset.index));
+        });
+      });
+
+      if (this.options.draggable) {
+        this.inner.addEventListener('mousedown', this.touchStart.bind(this));
+        this.inner.addEventListener('touchstart', this.touchStart.bind(this));
+        this.inner.addEventListener('mouseup', this.touchEnd.bind(this));
+        this.inner.addEventListener('touchend', this.touchEnd.bind(this));
+        this.inner.addEventListener('mousemove', this.touchMove.bind(this));
+        this.inner.addEventListener('touchmove', this.touchMove.bind(this));
+        this.inner.addEventListener('mouseleave', this.touchEnd.bind(this));
+      }
+    }
+
+    touchStart(event) {
+      this.isDragging = true;
+      this.startPos = this.getPositionX(event);
+      this.animationID = requestAnimationFrame(this.animation.bind(this));
+      this.inner.style.cursor = 'grabbing';
+    }
+
+    touchEnd() {
+      this.isDragging = false;
+      cancelAnimationFrame(this.animationID);
+      const movedBy = this.currentTranslate - this.prevTranslate;
+
+      if (movedBy < -100 && this.currentIndex < this.items.length - 1) {
+        this.currentIndex += 1;
+      }
+
+      if (movedBy > 100 && this.currentIndex > 0) {
+        this.currentIndex -= 1;
+      }
+
+      this.setPositionByIndex();
+      this.inner.style.cursor = 'grab';
+    }
+
+    touchMove(event) {
+      if (this.isDragging) {
+        const currentPosition = this.getPositionX(event);
+        this.currentTranslate =
+          this.prevTranslate + currentPosition - this.startPos;
+      }
+    }
+
+    getPositionX(event) {
+      return event.type.includes('mouse')
+        ? event.pageX
+        : event.touches[0].clientX;
+    }
+
+    animation() {
+      this.setSliderPosition();
+      if (this.isDragging) requestAnimationFrame(this.animation.bind(this));
+    }
+
+    setSliderPosition() {
+      this.inner.style.transform = `translateX(${this.currentTranslate}px)`;
+    }
+
+    setPositionByIndex() {
+      this.currentTranslate = this.currentIndex * -this.inner.clientWidth;
+      this.prevTranslate = this.currentTranslate;
+      this.setSliderPosition();
+      this.updateDots();
+    }
+
+    showSlide(index) {
+      this.currentIndex = index;
+      this.setPositionByIndex();
+    }
+
+    showNext() {
+      this.showSlide((this.currentIndex + 1) % this.items.length);
+    }
+
+    showPrev() {
+      this.showSlide(
+        (this.currentIndex - 1 + this.items.length) % this.items.length,
+      );
+    }
+
+    updateDots() {
+      this.dots.forEach((dot, index) => {
+        dot.classList.toggle('bg-opacity-100', index === this.currentIndex);
+        dot.classList.toggle('bg-opacity-50', index !== this.currentIndex);
+      });
+    }
+
+    startAutoPlay() {
+      setInterval(() => this.showNext(), this.options.interval);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const carouselElements = document.querySelectorAll('.carousel');
+    carouselElements.forEach((carouselElement) => {
+      new Carousel(carouselElement, {
+        autoPlay: carouselElement.dataset.autoplay === 'true',
+        interval: parseInt(carouselElement.dataset.interval) || 5000,
+        draggable: carouselElement.dataset.draggable === 'true',
+      });
+    });
+  });
+</script>

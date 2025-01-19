@@ -1,0 +1,20 @@
+---
+import FromCategory from './FromCategory.astro';
+import Stock from './Stock.astro';
+
+const { key, categories, category, subCategory, leafCategory } = Astro.props;
+---
+
+<div class="flex w-full flex-col items-stretch justify-start gap-5">
+   {/* <!-- Brand --> */}
+   {/* <!-- Price --> */}
+   <div class="w-full">
+      <div class="mb-3 flex w-full items-center justify-between">
+         <p class="text-lg font-bold text-primary">Price</p>
+         <p>Reset</p>
+      </div>
+      <!-- Slider goes here -->
+   </div>
+   <Stock />
+   <FromCategory key={key} categories={categories} category={category} subCategory={subCategory} leafCategory={leafCategory} />
+</div>

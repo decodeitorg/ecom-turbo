@@ -1,0 +1,84 @@
+---
+import Frontend from '@/models/Frontend';
+import { AiFillHome, AiFillHeart, AiFillMessage } from 'react-icons/ai';
+import { CategoryType, FrontendObjType } from '@/common/types';
+import Cart from './Cart.astro';
+
+interface Props {
+  categoryList: Array<CategoryType>;
+}
+let { categoryList = [] } = Astro.props;
+
+let frontend: FrontendObjType | null = await Frontend.findOne();
+
+let pathName = Astro.url.pathname;
+---
+
+<!-- BOTTOM NAV BAR - MOBILE  -->
+<nav
+  class="mx-auto flex w-full max-w-[1280px] items-center justify-around border-t border-primary bg-background px-3 py-2"
+>
+  <a href="/">
+    <div
+      class={`flex flex-col items-center p-1 rounded-full ${
+        pathName === '/'
+          ? 'text-primary bg-white border ring-2 ring-primary ring-offset-2'
+          : 'text-gray-400 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2'
+      } transition-all duration-300 ease-in-out transform hover:scale-105 ${pathName === '/' ? 'scale-110' : 'scale-100'} overflow-hidden`}
+    >
+      <AiFillHome size="24" />
+    </div>
+  </a>
+
+  <a href="/favorites">
+    <div
+      class={`flex flex-col items-center p-1 rounded-full ${
+        pathName === '/favorites'
+          ? 'text-primary bg-white border ring-2 ring-primary ring-offset-2'
+          : 'text-gray-400 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2'
+      } transition-all duration-300 ease-in-out transform hover:scale-105 ${pathName === '/favorites' ? 'scale-110' : 'scale-100'} overflow-hidden`}
+    >
+      <AiFillHeart size="24" />
+    </div>
+  </a>
+
+  <!-- <a href="/customer">
+    <div
+      class={`relative flex flex-col items-center p-1 rounded-full ${
+        pathName === '/profile'
+          ? 'text-primary bg-white border ring-2 ring-primary ring-offset-2'
+          : 'text-gray-400 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2'
+      } transition-all duration-300 ease-in-out transform hover:scale-105 ${pathName === '/profile' ? 'scale-110' : 'scale-100'} overflow-hidden`}
+    >
+      <FaUserCircle size="24" />
+    </div>
+  </a> -->
+  <Cart />
+  <a href={frontend?.facebook}>
+    <div
+      class={`flex flex-col items-center p-1 rounded-full ${
+        pathName === '/messages'
+          ? 'text-primary bg-white border ring-2 ring-primary ring-offset-2'
+          : 'text-gray-400 hover:ring-2 hover:ring-gray-300 hover:ring-offset-2'
+      } transition-all duration-300 ease-in-out transform hover:scale-105 ${pathName === '/messages' ? 'scale-110' : 'scale-100'} overflow-hidden`}
+    >
+      <AiFillMessage size="24" />
+    </div>
+  </a>
+</nav>
+
+<!-- for cart  -->
+<script>
+  const localStorageSetHandler = function () {
+    // Update the cart item count (you can customize this logic)
+    const cartCount = localStorage.getItem('cart')
+      ? JSON.parse(localStorage.getItem('cart')).length
+      : 0;
+    document.querySelectorAll('.cartcount').forEach((el) => {
+      el.textContent = cartCount;
+    });
+  };
+  localStorageSetHandler(); // Update the cart count on page load
+
+  document.addEventListener('cartItemChange', localStorageSetHandler, false);
+</script>

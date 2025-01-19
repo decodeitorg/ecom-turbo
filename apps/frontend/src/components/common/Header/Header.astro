@@ -1,0 +1,225 @@
+---
+import CategoryDrawer from '@/components/common/Header/CategoryDrawer.astro';
+import Cart from './Cart.astro';
+import User from './User.astro';
+let search = Astro.url.searchParams.get('search');
+import Frontend from '@/models/Frontend';
+import { FiSearch } from 'react-icons/fi';
+import { CategoryType, FrontendObjType } from '@/common/types';
+
+interface Props {
+  categoryList: Array<CategoryType>;
+}
+let { categoryList = [] } = Astro.props;
+
+let pathName = Astro.url.pathname;
+
+let frontend: FrontendObjType | null = await Frontend.findOne();
+---
+
+<header class="bg-background lg:relative">
+  <!-- <section class="">
+      <div class="container hidden lg:flex lg:justify-between">
+        <div class="my-3 flex w-full items-center justify-between">
+          <div class="flex items-center justify-between gap-4">
+            {
+              frontend?.youtube && (
+                <a href={frontend?.youtube} target="_blank" rel="noreferrer">
+                  <FaYoutube className="h-6 w-6 text-red-500" />
+                </a>
+              )
+            }
+            {
+              frontend?.facebook && (
+                <a href={frontend?.facebook} target="_blank" rel="noreferrer">
+                  <FaFacebook className="h-6 w-6 text-blue-500" />
+                </a>
+              )
+            }
+
+            {
+              frontend?.instagram && (
+                <a href={frontend?.instagram} target="_blank" rel="noreferrer">
+                  <FaInstagram className="h-6 w-6 text-red-500" />
+                </a>
+              )
+            }
+            {
+              frontend?.tiktok && (
+                <a href={frontend?.tiktok} target="_blank" rel="noreferrer">
+                  <FaTiktok className="h-6 w-6 text-red-500" />
+                </a>
+              )
+            }
+          </div>
+          <div>
+            <p class="">
+              Need help? Call us: {frontend?.phoneNumber?.[0]}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section> -->
+
+  <!-- DESKTOP NAV BAR -->
+  <nav class="container hidden lg:block">
+    <div class="flex items-center justify-between">
+      <!-- logo  -->
+      <a href="/" class="">
+        <img
+          src={frontend?.logo || '/images/no-image.png'}
+          alt="logo"
+          height="78"
+          width="78"
+        />
+      </a>
+
+      <!-- links -->
+      <div class="flex items-center justify-between gap-4">
+        <a href={'/'} class={pathName === '/' ? 'text-primary font-bold' : ''}>
+          Home
+        </a>
+        <a
+          href={'/products'}
+          class={pathName === '/products' || pathName === '/product'
+            ? 'text-primary font-bold'
+            : ''}
+        >
+          Product
+        </a>
+
+        <a
+          href={'/about-us'}
+          class={pathName === '/about-us' ||
+          pathName === '/contact-us' ||
+          pathName === '/terms-and-conditions'
+            ? 'text-primary font-bold'
+            : ''}
+        >
+          About Us
+        </a>
+      </div>
+
+      <div class="flex items-center justify-start gap-6">
+        <!-- search-->
+        <form id="search-form-desktop">
+          <input
+            id="search-input-desktop"
+            value={search}
+            type="text"
+            placeholder="Search"
+            class="w-60 rounded-md border border-gray-400 p-2"
+          />
+          <button
+            type="submit"
+            class="rounded-lg bg-primary px-3 py-2 text-white"
+          >
+            Search
+          </button>
+        </form>
+
+        <Cart />
+        <User key={2} />
+      </div>
+    </div>
+  </nav>
+
+  <!-- MOBILE NAV BAR -->
+  <nav class="block lg:hidden">
+    <div class="container">
+      <div class="grid grid-cols-3 items-center justify-between">
+        <div class="col-span-1 mr-2 flex items-center gap-2 lg:hidden">
+          <CategoryDrawer categoryList={categoryList} />
+        </div>
+        <div class="mx-auto">
+          <a href="/">
+            <img
+              src={frontend?.logo || '/images/no-image.png'}
+              alt="logo"
+              height="60"
+              width="60"
+              class="rounded-md"
+            />
+          </a>
+        </div>
+        <div class="col-span-1 flex items-center justify-end gap-6">
+          <FiSearch
+            className="mobile-search-trigger h-7 w-7 text-primary hover:cursor-pointer"
+          />
+          <User key={1} />
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<!-- Search modal for mobile -->
+<div
+  id="search-modal"
+  class="fixed z-40 hidden h-screen w-screen bg-white/30 backdrop-blur-sm transition-opacity duration-300"
+>
+  <div class="">
+    <form
+      id="search-form-mobile"
+      class="animate-fadeIn fixed left-1/2 top-1/2 flex w-full max-w-md -translate-x-1/2 -translate-y-1/2 transform flex-col items-center gap-4 rounded-lg border border-primary bg-white/80 p-6 shadow-lg"
+    >
+      <input
+        id="search-input-mobile"
+        value={search}
+        type="text"
+        placeholder="Search"
+        class="w-full rounded-md border border-gray-300 p-3 transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+      <div class="flex gap-3">
+        <button
+          id="serach-modal-close"
+          class="button hover:bg-primary-dark w-32 rounded-md bg-red-300 p-2 text-red-900 transition-colors duration-200"
+        >
+          Close
+        </button>
+        <button
+          type="submit"
+          class="hover:bg-primary-dark w-32 rounded-md bg-primary p-2 text-white transition-colors duration-200"
+        >
+          Search
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- script for both search forms and search modal -->
+<script>
+  let searchModal = document.getElementById('search-modal');
+  let searchFormDesktop = document.getElementById('search-form-desktop');
+  let searchInputDesktop = document.getElementById('search-input-desktop');
+  let searchFormMobile = document.getElementById('search-form-mobile');
+  let searchInputMobile = document.getElementById('search-input-mobile');
+  let searchModalClose = document.getElementById('serach-modal-close');
+
+  searchFormDesktop.addEventListener('submit', (e) => {
+    e.preventDefault();
+    let search = searchInputDesktop.value;
+    if (search) {
+      window.location.href = `/search?search=${search}`;
+    }
+  });
+
+  searchFormMobile.addEventListener('submit', (e) => {
+    e.preventDefault();
+    let search = searchInputMobile.value;
+    if (search) {
+      window.location.href = `/search?search=${search}`;
+    }
+  });
+
+  document
+    .querySelector('.mobile-search-trigger')
+    .addEventListener('click', () => {
+      searchModal.classList.toggle('hidden');
+    });
+
+  searchModalClose.addEventListener('click', () => {
+    searchModal.classList.add('hidden');
+  });
+</script>

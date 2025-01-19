@@ -1,0 +1,21 @@
+---
+let { campaignImages } = Astro.props;
+---
+
+<div class="container">
+    <div class="mt-9 grid grid-cols-2 gap-4 md:grid-cols-4">
+        {
+            campaignImages?.map((item, index) => (
+                <a href={item.link}>
+                    <img
+                        class="rounded-md"
+                        src={item.image}
+                        alt={item.alt}
+                        height={316}
+                        width={316}
+                    />
+                </a>
+            ))
+        }
+    </div>
+</div>

@@ -1,0 +1,36 @@
+---
+import Product from '@/models/Product';
+
+let { categoryList } = Astro.props;
+
+//find product count for each category
+let data = await Promise.all(
+  categoryList.map((category) =>
+    Product.find({ category: category._id }).countDocuments(),
+  ),
+);
+---
+
+<section class="container">
+  <div class="">
+    <div class="flex items-center justify-start gap-3 overflow-x-auto">
+      {
+        categoryList?.map((category, index) => (
+          <a href={`/products/${category.name}`}>
+            <div class="group flex h-full w-full flex-col items-center justify-center rounded-lg hover:border-primary hover:shadow hover:shadow-primary">
+              <img
+                src={category.icon}
+                alt={`${index} icon of ${category.name} `}
+                height={50}
+                width={50}
+              />
+              <h2 class="mt-2 text-center text-sm font-medium group-hover:text-primary">
+                {category.name}
+              </h2>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>

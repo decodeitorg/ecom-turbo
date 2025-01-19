@@ -1,0 +1,9 @@
+---
+import InfiniteScroll from '@/components/ui/InfiniteScroll.astro';
+
+let { brands } = Astro.props;
+---
+
+<section class="container">
+  <InfiniteScroll images={brands} speed={15000} />
+</section>
