@@ -1,3 +1,6 @@
+/// <reference lib="webworker" />
+/// <reference no-default-lib="true"/>
+
 // Injection point for the Workbox precache manifest
 self.__WB_MANIFEST;
 
