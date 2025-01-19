@@ -76,21 +76,19 @@ const NotificationToggle = () => {
 
     const subscribeToPushNotifications = async () => {
         try {
-            console.log("🚀 ~ subscribeToPushNotifications ~ registration:");
+            if (!("PushManager" in window)) {
+                throw new Error(
+                    "Push notifications are not supported in this browser"
+                );
+            }
+
             const registration = await navigator.serviceWorker.ready;
-            console.log(
-                "🚀 ~ subscribeToPushNotifications ~ registration:",
-                registration
-            );
+            console.log("Service Worker ready, attempting to subscribe...");
+
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: VAPID_PUBLIC_KEY,
             });
-            console.log(
-                "🚀 ~ subscribeToPushNotifications ~ subscription:",
-                subscription
-            );
-
             const response = await fetch(`${getApiUrl()}/api/notification`, {
                 method: "POST",
                 headers: {
@@ -100,27 +98,26 @@ const NotificationToggle = () => {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorBody = await response.text();
+                throw new Error(
+                    `Server error (${response.status}): ${errorBody}`
+                );
             }
 
             setIsEnabled(true);
             toast.success("Notifications enabled successfully.");
         } catch (error) {
             console.error("Error subscribing to push notifications:", error);
-            toast.error("Failed to enable notifications.");
+            const errorMessage =
+                error instanceof Error ? error.message : "Unknown error";
+            toast.error(`Failed to enable notifications: ${errorMessage}`);
         }
     };
 
     const unsubscribeFromPushNotifications = async () => {
         try {
-            console.log(
-                "🚀 ~ unsubscribeFromPushNotifications ~ unsubscribeFromPushNotifications:"
-            );
-
             const registration = await navigator.serviceWorker.ready;
-            console.log(
-                "🚀 ~ unsubscribeFromPushNotifications ~ unsubscribeFromPushNotifications:"
-            );
+            console.log("Service Worker ready, attempting to unsubscribe...");
 
             const subscription =
                 await registration.pushManager.getSubscription();
@@ -128,13 +125,15 @@ const NotificationToggle = () => {
                 await subscription.unsubscribe();
 
                 const response = await fetch(
-                    `${getApiUrl()}/api/notification`,
+                    `${getApiUrl()}/api/notification/unsubscribe`,
                     {
-                        method: "POST",
+                        method: "DELETE",
                         headers: {
                             "Content-Type": "application/json",
                         },
-                        body: JSON.stringify(subscription),
+                        body: JSON.stringify({
+                            endpoint: subscription.endpoint,
+                        }),
                     }
                 );
 

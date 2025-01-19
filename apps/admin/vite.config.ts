@@ -13,9 +13,13 @@ export default defineConfig({
                 type: "module",
                 navigateFallback: "index.html",
             },
-            srcDir: "public",
-            filename: "service-worker.js",
-            strategies: "generateSW",
+            strategies: "injectManifest",
+            injectRegister: "inline",
+            injectManifest: {
+                swSrc: "public/service-worker.js",
+                swDest: "dist/service-worker.js",
+                injectionPoint: "self.__WB_MANIFEST",
+            },
             workbox: {
                 maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
                 globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
